@@ -1,0 +1,483 @@
+# Prompt Completo: Sistema de Gestão de Processos Societários
+
+## 📋 CONTEXTO DO PROJETO
+
+Preciso desenvolver um sistema web completo para gerenciar processos societários (constituição, alteração e baixa de empresas) entre um escritório de contabilidade e seus clientes.
+
+---
+
+## 🎯 OBJETIVO
+
+Criar uma plataforma que permita aos clientes do escritório de contabilidade enviarem solicitações de processos societários de forma organizada, respeitando prazos e padrões estabelecidos, substituindo o processo atual feito por email/WhatsApp.
+
+---
+
+## 👥 USUÁRIOS DO SISTEMA
+
+### 1. **Clientes (Empresas)**
+- Preenchem formulários de processos
+- Fazem upload de documentos obrigatórios
+- Acompanham status dos processos
+- Recebem notificações e protocolos
+- Trocam mensagens com a contabilidade
+
+### 2. **Contadores (Contabilidade LTDA)**
+- Recebem e analisam processos
+- Atualizam status dos processos
+- Solicitam documentos complementares
+- Comunicam-se com clientes
+- Visualizam dashboard de processos
+
+### 3. **Administrador**
+- Gerencia usuários
+- Acessa relatórios
+- Configura sistema
+
+---
+
+## 📝 FUNCIONALIDADES PRINCIPAIS
+
+### **MÓDULO 1: Autenticação e Cadastro**
+- Cadastro de clientes (nome, email, CPF, telefone, senha)
+- Login com email/senha
+- Recuperação de senha
+- Perfis de usuário (cliente, contador, admin)
+
+### **MÓDULO 2: Constituição de Empresa**
+
+**Campos do formulário:**
+- Razão Social (obrigatório)
+- Nome Fantasia (opcional)
+- Área utilizada (m²) (obrigatório)
+- Área total da edificação (m²) (obrigatório)
+- Endereço completo com CEP (obrigatório)
+- Índice do IPTU (obrigatório)
+- Capital Social (obrigatório)
+- Regime tributário (obrigatório):
+  - Simples Nacional
+  - Lucro Real
+  - Lucro Presumido
+- Objetivo social descrito corretamente (obrigatório)
+- CNAE (obrigatório)
+- Responsável perante o CNPJ (obrigatório)
+- Sócio Administrador (obrigatório)
+- Assinaturas (upload de documento)
+
+### **MÓDULO 3: Baixa de Empresa**
+
+**Campos do formulário:**
+- Nome da empresa (obrigatório)
+- CNPJ (obrigatório)
+- Data da Baixa (obrigatório)
+- Os Sócios: (obrigatório)
+  - Nada Recebem
+  - Recebem (descrever valores)
+- Assinatura (upload de documento)
+
+### **MÓDULO 4: Alteração de Empresa**
+
+**4.1 Contratual (Abertura de Filial):**
+- Nome da empresa
+- CNPJ
+- Nome Fantasia (se houver)
+- Área total da edificação
+- Endereço completo
+- Índice do IPTU
+- Capital social
+- Objetivo social
+- CNAE
+
+**4.2 Alteração de Endereço:**
+- Nome da empresa
+- CNPJ
+- Endereço completo com CEP (com validador de CEP)
+- Índice de IPTU
+- Área utilizada (m²)
+- Área total da edificação
+
+**4.3 Alteração de Natureza:**
+- Nome da empresa
+- CNPJ
+- Opções:
+  - Sociedade Empresária Limitada
+  - Sociedade Anônima Aberta
+  - Sociedade Anônima Fechada
+  - Empresário
+
+**4.4 Alteração de Nome Empresarial:**
+- Nome da empresa atual
+- CNPJ
+- Novo nome da empresa
+
+**4.5 Alteração de Objetivo:**
+- Nome da empresa
+- CNPJ
+- Objetivo social (novo)
+
+**4.6 Alteração de Quadro Societário:**
+- Nome da Empresa
+- CNPJ
+- Tipo de alteração:
+  - Saída de Sócio
+  - Entrada de Sócio
+
+**Dados do Sócio (se entrada):**
+- Nome
+- Profissão
+- Estado civil
+- Sob o regime de (regime de casamento)
+- Data de nascimento
+- Identidade (RG/CPF)
+- Upload de PDF da identidade
+- Endereço residencial completo
+- Participação na sociedade (%)
+- Valor (R$)
+
+### **MÓDULO 5: Gestão de Documentos**
+- Upload múltiplo de arquivos (PDF, JPG, PNG)
+- Validação de tipo e tamanho de arquivo
+- Armazenamento seguro
+- Download de documentos
+- Visualização de documentos
+
+### **MÓDULO 6: Sistema de Protocolo**
+- Geração automática de número único de protocolo (formato: AAAA-NNNN)
+- Registro de data/hora de envio
+- PDF do protocolo para download
+- Validação de prazo de 72h de antecedência (obrigatório)
+
+### **MÓDULO 7: Dashboard e Acompanhamento**
+- Dashboard do cliente:
+  - Resumo (processos em andamento, pendentes, concluídos)
+  - Lista de processos
+  - Status de cada processo
+  - Botão "Novo Processo"
+- Dashboard do contador:
+  - Todos os processos recebidos
+  - Filtros por empresa, tipo, status, data
+  - Atribuição de processos
+  - Atualização de status
+
+### **MÓDULO 8: Sistema de Comunicação**
+- Chat/mensagens entre cliente e contador por processo
+- Notificações de novas mensagens
+- Histórico de conversas
+- Anexos em mensagens
+
+### **MÓDULO 9: Notificações**
+- Email de confirmação de cadastro
+- Email de processo enviado com protocolo
+- Notificação de mudança de status
+- Notificação de nova mensagem
+- Alerta de prazo de 72h
+
+### **MÓDULO 10: Relatórios**
+- Relatório de processos por período
+- Relatório de processos por tipo
+- Tempo médio de conclusão
+- Processos em atraso
+- Cumprimento de prazos
+
+---
+
+## 🔄 FLUXO DO SISTEMA
+
+### Fluxo do Cliente:
+1. Acessa o site
+2. Faz cadastro ou login
+3. Acessa dashboard
+4. Clica em "Novo Processo"
+5. Escolhe tipo (Constituição/Alteração/Baixa)
+6. Preenche formulário em etapas (wizard)
+7. Faz upload de documentos obrigatórios
+8. Revisa informações
+9. Sistema valida prazo de 72h
+10. Envia processo
+11. Recebe protocolo e email de confirmação
+12. Acompanha status no dashboard
+13. Troca mensagens com contador se necessário
+
+### Fluxo do Contador:
+1. Recebe notificação de novo processo
+2. Acessa dashboard
+3. Visualiza detalhes do processo
+4. Analisa documentos
+5. Atualiza status
+6. Solicita documentos complementares (se necessário)
+7. Marca processo como concluído
+8. Cliente recebe notificação
+
+---
+
+## 🏗️ ARQUITETURA TÉCNICA
+
+### **Stack Tecnológica:**
+
+**Frontend:**
+- Next.Js
+
+**Backend:**
+- Node.js 18+
+- Express.js + TypeScript
+- Prisma ORM
+- PostgreSQL
+- JWT (autenticação)
+- Bcrypt (hash de senhas)
+- Multer (upload de arquivos)
+- Nodemailer (envio de emails)
+- Zod (validação de dados)
+
+**Infraestrutura:**
+- Frontend: Vercel (hospedagem)
+- Backend + Banco: Railway (hospedagem)
+- Arquivos: AWS S3 ou servidor local (híbrido)
+- Email: SendGrid
+- Comunicação híbrida: Cloudflare Tunnel (se necessário)
+
+### **Arquitetura Híbrida (Opcional):**
+- Frontend e Backend na cloud
+- Documentos sensíveis armazenados em servidor local do escritório
+- Comunicação segura via Cloudflare Tunnel ou VPN
+- Autenticação mútua com certificados
+
+---
+
+## 🗄️ MODELO DE DADOS
+
+### **Tabelas Principais:**
+
+**1. usuarios**
+- id, nome_completo, email, cpf, telefone, senha_hash
+- tipo_usuario (cliente/contador/admin)
+- data_cadastro, ultimo_acesso, ativo
+
+**2. processos**
+- id, protocolo, tipo_processo, subtipo
+- usuario_id (FK)
+- status (rascunho/enviado/em_analise/pendente_doc/concluido/cancelado)
+- data_criacao, data_envio, data_conclusao
+- prazo_72h_valido, dados_json, observacoes
+
+**3. documentos**
+- id, processo_id (FK), tipo_documento
+- nome_arquivo, tamanho_bytes, url_storage, mime_type
+- hash_md5, data_upload, uploaded_by (FK)
+
+**4. mensagens**
+- id, processo_id (FK)
+- remetente_id (FK), destinatario_id (FK)
+- mensagem_texto, data_envio, lida, data_leitura
+
+**5. protocolos**
+- id, numero_protocolo, processo_id (FK)
+- data_geracao, hash_verificacao, pdf_url
+
+**6. audit_logs**
+- id, usuario_id (FK), action, resource, resource_id
+- ip_address, user_agent, timestamp
+
+---
+
+## 🔒 REQUISITOS DE SEGURANÇA
+
+### Obrigatórios:
+- HTTPS/SSL em todas as comunicações
+- Senhas com hash bcrypt (salt rounds >= 10)
+- JWT com expiração para autenticação
+- Validação de entrada em todos os formulários
+- Rate limiting (100 requisições por 15min por IP)
+- CORS configurado (apenas frontend permitido)
+- Headers de segurança (Helmet)
+- Upload de arquivos com validação de tipo e tamanho
+- Sanitização de dados de entrada
+- Logs de auditoria (LGPD)
+- Criptografia de documentos armazenados
+- Backup automático diário
+
+### Validações de Dados:
+- CEP: formato 00000-000 e validação via API ViaCEP
+- CNPJ: formato 00.000.000/0000-00 e dígitos verificadores
+- CPF: formato 000.000.000-00 e dígitos verificadores
+- Email: formato válido
+- Telefone: formato brasileiro
+- Participação societária: soma = 100%
+- Capital social: valor > 0
+- Prazo: >= 72 horas de antecedência
+
+---
+
+## 📱 INTERFACE DO USUÁRIO
+
+### Características:
+- Design moderno e profissional
+- Responsivo (mobile, tablet, desktop)
+- Formulários em etapas (wizard) para processos longos
+- Feedback visual em todas as ações
+- Loading states e mensagens de erro claras
+- Confirmações antes de ações críticas
+- Barra de progresso em formulários
+- Notificações toast para alertas
+
+### Paleta de Cores Sugerida:
+- Primária: #2563eb (Azul profissional)
+- Secundária: #10b981 (Verde sucesso)
+- Alerta: #f59e0b (Laranja atenção)
+- Erro: #ef4444 (Vermelho)
+- Neutro: #64748b (Cinza)
+
+---
+
+## 🚀 FASES DE DESENVOLVIMENTO
+
+### FASE 1: MVP (2-3 semanas)
+- Autenticação (cadastro, login, recuperação de senha)
+- Formulário de Constituição completo
+- Upload de documentos
+- Sistema de protocolo
+- Dashboard básico
+- Notificações por email
+
+### FASE 2: Expansão (2 semanas)
+- Formulário de Baixa
+- Formulário de Alteração (todos os tipos)
+- Sistema de mensagens
+- Dashboard completo
+
+### FASE 3: Refinamento (1-2 semanas)
+- Relatórios
+- Melhorias de UX
+- Testes completos
+- Deploy em produção
+
+### FASE 4: Híbrido (opcional, após validação)
+- Integração com servidor local
+- Cloudflare Tunnel
+- Sincronização de dados
+
+---
+
+## ✅ CRITÉRIOS DE ACEITAÇÃO
+
+### Funcionalidade:
+- [ ] Cliente consegue criar conta e fazer login
+- [ ] Cliente consegue criar processo de constituição completo
+- [ ] Cliente consegue criar processo de baixa completo
+- [ ] Cliente consegue criar todos os tipos de alteração
+- [ ] Sistema valida prazo de 72h corretamente
+- [ ] Upload de documentos funciona (múltiplos arquivos)
+- [ ] Protocolo é gerado automaticamente
+- [ ] Email de confirmação é enviado
+- [ ] Contador recebe notificação de novo processo
+- [ ] Status do processo pode ser atualizado
+- [ ] Mensagens entre cliente e contador funcionam
+- [ ] Dashboard mostra informações corretas
+
+### Segurança:
+- [ ] Senhas são armazenadas com hash
+- [ ] JWT expira corretamente
+- [ ] HTTPS ativo em produção
+- [ ] Validação de entrada em todos os formulários
+- [ ] Upload valida tipo e tamanho de arquivo
+- [ ] Rate limiting ativo
+- [ ] CORS configurado
+- [ ] Logs de auditoria funcionando
+
+### Performance:
+- [ ] Página carrega em < 3 segundos
+- [ ] Upload de arquivo < 10MB leva < 5 segundos
+- [ ] Formulário não trava com muitos campos
+
+### Usabilidade:
+- [ ] Interface funciona em mobile
+- [ ] Formulários têm validação em tempo real
+- [ ] Mensagens de erro são claras
+- [ ] Usuário sempre sabe onde está
+- [ ] Processo de envio tem confirmação
+
+---
+
+## 📝 DOCUMENTAÇÃO NECESSÁRIA
+
+- [ ] README com instruções de instalação
+- [ ] Documentação de API (endpoints, request/response)
+- [ ] Diagrama de fluxo de dados
+- [ ] Diagrama entidade-relacionamento (banco)
+- [ ] Manual do usuário (cliente)
+- [ ] Manual do usuário (contador)
+- [ ] Guia de deploy
+- [ ] Política de privacidade (LGPD)
+
+---
+
+## 🎓 PERFIL DO DESENVOLVEDOR
+
+**Experiência:**
+- JavaScript (avançado)
+- TypeScript (intermediário)
+- Node.js (avançado)
+- React (aprendendo)
+- MySQL (básico)
+- Python (aprendendo)
+
+**Objetivos com este projeto:**
+- Aprender React na prática
+- Melhorar TypeScript
+- Criar projeto portfolio completo
+- Implementar arquitetura híbrida cloud/local
+
+---
+
+## ⚠️ RESTRIÇÕES E CONSIDERAÇÕES
+
+### Restrições:
+- Documentos sensíveis devem poder ser armazenados em servidor local
+- Sistema deve respeitar LGPD
+- Prazo de 72h é obrigatório (documento original da contabilidade)
+- Arquitetura deve permitir migração cloud → híbrido no futuro
+
+### Considerações:
+- Começar 100% cloud para validar rápido
+- Migrar para híbrido após validação
+- Priorizar segurança sobre funcionalidades extras
+- Código limpo e bem documentado para manutenção futura
+
+---
+
+## 🎯 RESULTADO ESPERADO
+
+Um sistema web completo, seguro e profissional que:
+- Elimina processos manuais (email/WhatsApp)
+- Organiza e padroniza o envio de informações
+- Garante cumprimento de prazos (72h)
+- Facilita comunicação cliente-contador
+- Mantém documentos seguros e organizados
+- Gera protocolos rastreáveis
+- Proporciona transparência no status dos processos
+- É escalável para crescimento futuro
+
+---
+
+## 💡 PRÓXIMOS PASSOS
+
+1. Criar schema completo do Prisma (banco de dados)
+2. Configurar estrutura de pastas (backend + frontend)
+3. Implementar autenticação (JWT)
+4. Desenvolver formulário de constituição
+5. Implementar upload de documentos
+6. Criar sistema de protocolo
+7. Desenvolver dashboards
+8. Implementar notificações
+9. Testes completos
+10. Deploy inicial (cloud)
+11. Validar com usuários reais
+12. Migrar para híbrido (se necessário)
+
+---
+
+## 📞 CONTEXTO ADICIONAL
+
+**Empresa:** Contabilidade LTDA - CNPJ 25.701.707/0001-56  
+**Localização:** Belo Horizonte - MG  
+**Documentação base:** Comunicado sobre fluxo de envio de informações (item 4 - Constituição, Alteração e Baixa)
+
+Este sistema faz parte de uma iniciativa maior de digitalização dos processos do escritório contábil.

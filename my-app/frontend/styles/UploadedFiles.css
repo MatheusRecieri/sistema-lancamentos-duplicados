@@ -1,0 +1,46 @@
+.uploaded-files {
+  margin-top: 2rem;
+  background-color: #ffffff9a;
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.uploaded-files h3 {
+  margin-bottom: 1rem;
+  color: #071a36; /* seu azul escuro */
+  font-size: 1.2rem;
+}
+
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  margin-bottom: 0.6rem;
+  transition: background 0.2s ease;
+  background-color: #fff;
+}
+
+.file-item:hover {
+  background-color: #f28c28; /* seu laranja */
+  color: #fff;
+}
+
+.file-name {
+  font-weight: 600;
+}
+
+.file-size {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}

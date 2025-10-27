@@ -1,0 +1,4 @@
+Possiveis Melhorias na velocidade de processamento dos arquivos:
+
+1. Não buscar itens desnecessarios
+2. cortar o processo de extração de dados
