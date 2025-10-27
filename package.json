@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon backend/src/server.js",
     "build": "next build frontend",
-    "start": "next start",
+    "start": "node backend/src/server.js",
     "lint": "eslint"
   },
   "dependencies": {

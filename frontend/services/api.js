@@ -1,11 +1,14 @@
 import dotenv from "dotenv";
 
-const API_BASE_URL = process.env.FRONTEND_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const fileService = {
   async uploadFile(file) {
     const formData = new FormData();
     formData.append('file', file);
+
+    // console.log(API_BASE_URL);
+
 
     const response = await fetch(`${API_BASE_URL}/files/upload`, {
       method: 'POST',

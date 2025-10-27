@@ -18,8 +18,10 @@ app.prepare().then(() => {
 
   const server = express();
 
+  // console.log(FRONTEND_URL);
+
   server.use(cors({
-    origin: FRONTEND_URL,
+    origin: 'http://localhost:3000',
     credentials: true
   }));
 
@@ -34,7 +36,7 @@ app.prepare().then(() => {
   // CORREÇÃO: era app.search, agora é app.use
   server.use("/uploads", express.static(path.resolve("uploads")));
 
-  server.use("/files", fileRoutes);
+  server.use("/files", fileRoutes); //antiga api
 
   server.all('/{*splat}', (req, res) => {
     return handle(req, res);
@@ -42,7 +44,7 @@ app.prepare().then(() => {
 
   server.listen(PORT, (err) => {
     if (err) throw err;
-    console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}:${PORT}`);
+    console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}`);
   });
 
 
