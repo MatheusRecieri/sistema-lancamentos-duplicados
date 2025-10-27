@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:3000';
+import dotenv from "dotenv";
+
+const API_BASE_URL = process.env.FRONTEND_URL;
 
 export const fileService = {
   async uploadFile(file) {
