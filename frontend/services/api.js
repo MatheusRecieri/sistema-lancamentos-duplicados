@@ -9,7 +9,6 @@ export const fileService = {
 
     // console.log(API_BASE_URL);
 
-
     const response = await fetch(`${API_BASE_URL}/files/upload`, {
       method: 'POST',
       body: formData,
@@ -26,7 +25,7 @@ export const fileService = {
   downloadExcel(processId) {
     return new Promise((resolve, reject) => {
       try {
-        console.log(`🔗 Iniciando download direto para: ${processId}`);
+        console.log(`Iniciando download direto para: ${processId}`);
 
         // Criar link temporário
         const link = document.createElement('a');
@@ -45,11 +44,11 @@ export const fileService = {
           if (link.parentNode) {
             link.parentNode.removeChild(link);
           }
-          console.log('✅ Download iniciado com sucesso');
+          console.log('Download iniciado com sucesso');
           resolve(true);
         }, 100);
       } catch (error) {
-        console.error('❌ Erro no download direto:', error);
+        console.error('Erro no download direto:', error);
         reject(error);
       }
     });
