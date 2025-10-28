@@ -1,4 +1,4 @@
-import { readFileContent } from "../services/fileReaderService.js";
+import { readFileContent } from "../services/FileReaderService.js";
 import { analyzeDuplicates, formatarResultadosParaExportacao } from "../services/analysisService.js";
 import { exportToExcel } from "../services/exportExcelService.js";
 import path from "path";
