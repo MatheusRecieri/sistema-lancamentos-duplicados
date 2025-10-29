@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 function UploadedFiles({ files }) {
-  console.log(files);
+  // console.log(files);
 
   if (files.length === 0) {
     return (

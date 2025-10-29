@@ -1,13 +1,13 @@
-import { readFileContent } from "../services/fileReaderService.js";
-import { analyzeDuplicates, formatarResultadosParaExportacao } from "../services/analysisService.js";
+import { pythonService } from "../services/pythonServiceClient.js";
 import { exportToExcel } from "../services/exportExcelService.js";
-import path from "path";
 
 const analysisStorage = new Map();
 
+/**
+ * Controller principal - usa serviço Python para PDFs
+ */
 export const uploadAndAnalyze = async (req, res) => {
   try {
-
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -15,23 +15,51 @@ export const uploadAndAnalyze = async (req, res) => {
       });
     }
 
-    console.log('Arquivo recebido:', req.file);
+    console.log('📄 Arquivo recebido:', req.file.originalname);
+    console.log('📊 Tipo:', req.file.mimetype);
 
-    // Processa o arquivo
-    const structuredData = await readFileContent(req.file.path, req.file.mimetype);
+    const isPDF = req.file.mimetype.includes('pdf');
 
-    // Análise real
-    const analysisResult = analyzeDuplicates(structuredData);
+    let analysisResult;
 
+    // ✅ ROTA PYTHON: PDFs usam o microserviço Python
+    if (isPDF) {
+      console.log('🐍 Usando serviço Python para análise...');
+
+      // Verifica se serviço está online
+      const health = await pythonService.healthCheck();
+      if (!health) {
+        throw new Error('Serviço Python está offline. Certifique-se que está rodando na porta 5000.');
+      }
+
+      // Envia para análise
+      analysisResult = await pythonService.analyzePDF(req.file.path);
+
+      console.log('✅ Análise Python concluída');
+    }
+    // ✅ FALLBACK: Outros formatos usam Node.js
+    else {
+      console.log('📊 Usando análise Node.js (Excel/Word)...');
+
+      // Importa dinamicamente apenas se necessário
+      const { readFileContent } = await import("../services/fileReaderService.js");
+      const { analyzeDuplicates } = await import("../services/analysisService.js");
+
+      const structuredData = await readFileContent(req.file.path, req.file.mimetype);
+      analysisResult = analyzeDuplicates(structuredData);
+    }
+
+    // Gera ID do processo
     const processId = Date.now().toString();
 
+    // Formata resposta padronizada
     const formattedResult = {
       success: true,
       processId: processId,
       filename: req.file.originalname,
       totalEntries: analysisResult.summary.totalItensProcessados,
       validEntries: analysisResult.summary.itensValidos,
-      duplicates: analysisResult.duplicatas.map((dup, index) => ({
+      duplicates: (analysisResult.duplicatas || []).map((dup, index) => ({
         id: index + 1,
         codigoFornecedor: dup.codigoFornecedor,
         fornecedor: dup.fornecedor,
@@ -45,7 +73,7 @@ export const uploadAndAnalyze = async (req, res) => {
         chaveDuplicata: dup.chaveDuplicata,
         detalhes: dup.detalhes
       })),
-      possibleDuplicates: analysisResult.possiveisDuplicatas.map((dup, index) => ({
+      possibleDuplicates: (analysisResult.possiveisDuplicatas || []).map((dup, index) => ({
         id: index + 1,
         codigoFornecedor: dup.codigoFornecedor,
         fornecedor: dup.fornecedor,
@@ -59,7 +87,7 @@ export const uploadAndAnalyze = async (req, res) => {
         chaveDuplicata: dup.chaveDuplicata,
         detalhes: dup.detalhes
       })),
-      allEntries: analysisResult.notasUnicas.map((item, index) => ({
+      allEntries: (analysisResult.notasUnicas || []).map((item, index) => ({
         id: index + 1,
         codigoFornecedor: item.codigoFornecedor,
         fornecedor: item.fornecedor,
@@ -70,28 +98,65 @@ export const uploadAndAnalyze = async (req, res) => {
         status: 'Normal'
       })),
       summary: analysisResult.summary,
-      // analiseDetalhada: formatarResultadosParaExportacao(analysisResult).analiseDetalhada,
       message: `Análise concluída: ${analysisResult.summary.duplicatasExatas} duplicatas reais e ${analysisResult.summary.possiveisDuplicatas} possíveis duplicatas encontradas`
     };
 
-    // CORREÇÃO: Usar rawAnalysis em vez de ranAnalysis
+    // Armazena para exportação
     analysisStorage.set(processId, {
       ...formattedResult,
-      rawAnalysis: analysisResult,
-      exportData: formatarResultadosParaExportacao(analysisResult)
+      rawAnalysis: analysisResult
     });
 
-    console.log('Análise concluída:', {
-      totalItens: formattedResult.totalEntries,
-      duplicatas: formattedResult.duplicates.length,
-      possiveis: formattedResult.possibleDuplicates.length
-    });
+    console.log('📊 Resumo da análise:');
+    console.log(`   Total: ${formattedResult.totalEntries}`);
+    console.log(`   Duplicatas: ${formattedResult.duplicates.length}`);
+    console.log(`   Possíveis: ${formattedResult.possibleDuplicates.length}`);
 
-    // Envia resposta para o frontend
     res.json(formattedResult);
 
   } catch (error) {
-    console.error('Erro no controller:', error);
+    console.error('❌ Erro no controller:', error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+/**
+ * Endpoint de debug para testar extração
+ */
+export const debugAnalysis = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nenhum arquivo enviado'
+      });
+    }
+
+    const isPDF = req.file.mimetype.includes('pdf');
+
+    if (!isPDF) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debug disponível apenas para PDFs'
+      });
+    }
+
+    // Usa endpoint de debug do Python
+    const debugData = await pythonService.analyzePDFDebug(req.file.path);
+
+    res.json({
+      success: true,
+      filename: req.file.originalname,
+      ...debugData
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no debug:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -99,11 +164,12 @@ export const uploadAndAnalyze = async (req, res) => {
   }
 };
 
+/**
+ * Exportação para Excel (mantém igual)
+ */
 export const exportToExcelController = async (req, res) => {
   try {
     const { processId } = req.params;
-
-    // console.log(`📥 Download solicitado para processId: ${processId}`);
 
     if (!processId) {
       return res.status(400).json({
@@ -112,7 +178,6 @@ export const exportToExcelController = async (req, res) => {
       });
     }
 
-    // Buscar análise do armazenamento
     const analysisData = analysisStorage.get(processId);
 
     if (!analysisData) {
@@ -122,25 +187,15 @@ export const exportToExcelController = async (req, res) => {
       });
     }
 
-    console.log('📊 Dados encontrados para exportação:', {
-      filename: analysisData.filename,
-      totalEntries: analysisData.totalEntries,
-      // CORREÇÃO: Usar analysisData.duplicates que agora existe
-      duplicates: analysisData.duplicates?.length,
-      possiveis: analysisData.possibleDuplicates?.length
-    });
-
     const exportData = {
       summary: {
         'Arquivo Processado': analysisData.filename,
         'Data da Análise': new Date().toLocaleString('pt-BR'),
         'Total de Itens Processados': analysisData.totalEntries,
         'Itens Válidos': analysisData.validEntries,
-        // CORREÇÃO: Usar analysisData.duplicates que agora existe
         'Duplicatas Exatas Encontradas': analysisData.duplicates.length,
         'Possíveis Duplicatas': analysisData.possibleDuplicates.length
       },
-      // CORREÇÃO: Usar analysisData.duplicates que agora existe
       duplicatas: analysisData.duplicates.map(dup => ({
         'Código Fornecedor': dup.codigoFornecedor,
         'Fornecedor': dup.fornecedor,
@@ -166,33 +221,16 @@ export const exportToExcelController = async (req, res) => {
         'Número da Nota': dup.notaSerie,
         'Valor Contábil': dup.valorContabil,
         'Valor': dup.valor,
-        'Chave Similar': dup.chaveDuplicata,
-        'Dias de Diferença': dup.diferencaDias,
-        'Nota Similar': dup.notaSimilar,
-        'Data Similar': dup.dataSimilar
+        'Chave Similar': dup.chaveDuplicata
       }))
     };
 
-    // Usar a função exportToExcel DO SERVICE
     const excelBuffer = await exportToExcel(exportData);
 
-    console.log(`✅ Excel gerado: ${excelBuffer.length} bytes`);
-
-    // Headers para download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="analise-duplicatas-${processId}.xlsx"`);
     res.setHeader('Content-Length', excelBuffer.length);
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
 
-    // CORS headers para garantir acesso
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-    console.log(`📤 Enviando Excel para download...`);
-
-    // Enviar arquivo
     res.send(excelBuffer);
 
   } catch (error) {
@@ -204,6 +242,9 @@ export const exportToExcelController = async (req, res) => {
   }
 };
 
+/**
+ * Limpeza de armazenamento (mantém igual)
+ */
 export const cleanupStorage = async (req, res) => {
   try {
     const now = Date.now();
