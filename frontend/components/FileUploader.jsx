@@ -80,7 +80,7 @@ function FileUploader({ onUpload }) {
         className={`p-10 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer ${
           isDragOver
             ? 'border-blue-400 bg-blue-50/40 shadow-lg'
-            : 'border-[#f28c28] bg-white/10 hover:bg-white/20'
+            : ' bg-white/10 hover:bg-white/20'
         } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
         onClick={() => !uploading && fileInputRef.current?.click()}
       >
@@ -122,7 +122,8 @@ function FileUploader({ onUpload }) {
               Selecionar Arquivos
             </button>
             <p className="text-sm text-white/70 mt-4">
-              Formatos suportados: PDF, DOCX, XLS, XLSX, TXT, CSV
+              {/* Formatos suportados: PDF, DOCX, XLS, XLSX, TXT, CSV */}
+              Formatos suportados: PDF (por enquanto)
             </p>
           </>
         )}

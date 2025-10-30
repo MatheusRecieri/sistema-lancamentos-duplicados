@@ -62,18 +62,23 @@ async def analyze_pf(file: UploadFile = File(...)):
 
     try:
         # validação do tipo de arquivo
-        if (
-            not file.filename.lower().endswith(".pdf")
-            or file.filename.lower().endswith(".docx")
-            or file.filename.lower().endswith(".xlsx")
-            or file.filename.lower().endswith(".txt")
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="Apenas arquivos PDF, docx, xlsx e txt são suportados",
-            )
+        # if (
+        #     not file.filename.lower().endswith(".pdf")
+        #     or file.filename.lower().endswith(".docx")
+        #     or file.filename.lower().endswith(".xlsx")
+        #     or file.filename.lower().endswith(".txt")
+        # ):
+        #     raise HTTPException(
+        #         status_code=400,
+        #         detail="Apenas arquivos PDF, docx, xlsx e txt são suportados",
+        #     )
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+        # passar tipo de arquivo que vai entrar na função
+        file_extension = os.path.splitext(str(file.filename))[1]
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file_extension
+        ) as temp_file:
             content = await file.read()
             temp_file.write(content)
             temp_path = temp_file.name
