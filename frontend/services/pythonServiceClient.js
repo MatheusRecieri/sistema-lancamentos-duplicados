@@ -2,7 +2,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import fs from 'fs';
 
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:5000';
+const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL;
 
 /**
  * Cliente para comunicação com o microserviço Python
@@ -54,12 +54,12 @@ class PythonServiceClient {
 
     } catch (error) {
       console.error('❌ Erro na análise Python:', error.message);
-      
+
       if (error.response) {
         console.error('Detalhes:', error.response.data);
         throw new Error(error.response.data.detail || 'Erro no serviço Python');
       }
-      
+
       throw error;
     }
   }
