@@ -4,15 +4,20 @@ uvicorn==0.22.0
 
 # PDF Processing
 pdfplumber==0.8.0
-
-# Data Processing
 pandas==2.0.1
 rapidfuzz==2.6.0
 
-# Utilities
-python-dateutil==2.8.2
+# Data Processing
+python-multipart==0.0.6
+pydantic==1.10.9
+
+# Text Processing
 unidecode==0.5.0
 
-# Optional mas recomendado
-pydantic==1.10.9
-python-multipart==0.0.6  # Para upload de arquivos
+# Date Handling
+python-dateutil==2.8.2
+```
+
+2. `Procfile` (na raiz do projeto Python)
+```
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT

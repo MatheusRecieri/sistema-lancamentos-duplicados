@@ -2,9 +2,10 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import tempfile
-import os
 from typing import Dict, Any
 import traceback
+import uvicorn
+import os
 
 from app.services.pdf_reader import PDFReader
 from app.services.analyzer import DuplicateAnalyzer
@@ -184,6 +185,5 @@ async def analyze_pdf_debug(file: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True, log_level="info")
+    port = int(os.environ.get("PORT", 5000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=False)
