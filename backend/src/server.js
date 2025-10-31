@@ -7,7 +7,7 @@ import path from "path";
 
 dotenv.config();
 
-const FRONTEND_URL = process.env.FRONTEND_URL;
+const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL;
 const PORT = process.env.PORT || 3000;
 const dev = process.env.NODE_ENV !== 'development';
 const app = next({ dev, dir: './frontend' });
@@ -21,7 +21,7 @@ app.prepare().then(() => {
   // console.log(FRONTEND_URL);
 
   server.use(cors({
-    origin: 'http://localhost:3000',
+    origin: FRONTEND_URL || 'http://localhost:3000',
     credentials: true
   }));
 
