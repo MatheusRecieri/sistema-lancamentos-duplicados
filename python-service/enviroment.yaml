@@ -17,4 +17,4 @@ dependencies:
   - python-multipart
   - python-dotenv
   - pip:
-    - -r requirements.txt
+    - -r python-service/requirements.txt
