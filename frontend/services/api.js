@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_FRONTEND_URL;
 
 export const fileService = {
   async uploadFile(file) {
