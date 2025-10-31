@@ -1,0 +1,20 @@
+name: lancamentos-duplicados-backend
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pandas
+  - numpy
+  - openpyxl
+  - python-docx
+  - pdfminer.six
+  - fastapi
+  - uvicorn[standard]
+  - sqlalchemy
+  - aiofiles
+  - python-multipart
+  - python-dotenv
+  - pip:
+    - -r requirements.txt
