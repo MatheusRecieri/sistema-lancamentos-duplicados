@@ -2,6 +2,7 @@ import { pythonService } from "../services/pythonServiceClient.js";
 import { exportToExcel } from "../services/exportExcelService.js";
 
 const analysisStorage = new Map();
+const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL
 
 /**
  * Controller principal - usa serviço Python para PDFs

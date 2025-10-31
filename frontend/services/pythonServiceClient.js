@@ -23,10 +23,16 @@ class PythonServiceClient {
    */
   async healthCheck() {
     try {
+      console.log('URL do Serviço Python:', this.client.defaults.baseURL);
       const response = await this.client.get('/health');
+      console.log('Health Check Resultado:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ Serviço Python offline:', error.message);
+      console.error('❌ Erro no Health Check:', {
+        message: error.message,
+        url: this.client.defaults.baseURL,
+        config: error.config
+      });
       return null;
     }
   }

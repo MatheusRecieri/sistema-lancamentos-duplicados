@@ -21,9 +21,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://sistema-lancamentos-duplicados.onrender.com",
-        "https://seu-backend-node.onrender.com",
-        "http://localhost:3000",  # Frontend local
         "http://localhost:10000",  # Backend local
+        "*",  # Frontend local
     ],
     allow_credentials=True,
     allow_methods=["*"],
