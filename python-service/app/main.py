@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
 import tempfile
 import os
 from typing import Dict, Any
@@ -15,11 +16,15 @@ app = FastAPI(
     description="Serviço especializado em análise de duplicatas em lançamentos de notas fiscais",
     version="1.0.0",
 )
-
+FRONT_END_PRODUCTION = os.getenv("FRONT_END_PRODUCTION")
 # CORS para integração com node.js
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:4000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:4000",
+        str(FRONT_END_PRODUCTION),
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
