@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+```
+
+3. Configuração no Render:
+- Usar Python 3.10 ou 3.11 (mais estável)
+- Adicionar arquivo `runtime.txt`:
+```
+python-3.10.12
+```
+
+4. Arquivo `requirements.txt` simplificado:
+```
+# Remova versões específicas que podem causar conflito
+fastapi
+uvicorn
+pdfplumber
+pandas
+numpy
+rapidfuzz
+unidecode
+python-dateutil
+pydantic
+python-multipart
+openpyxl
+xlrd
+python-jose
+python-dotenv
+loguru
+scipy
+setuptools>=61.0
+wheel
