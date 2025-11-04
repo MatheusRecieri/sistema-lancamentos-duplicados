@@ -251,6 +251,7 @@ class DuplicateAnalyzer:
 
     def _calc_date_diff(self, date1: str, date2: str) -> int:
         """Calcula diferença em dias entre duas datas"""
+
         try:
             d1 = datetime.strptime(date1, "%d/%m/%Y")
             d2 = datetime.strptime(date2, "%d/%m/%Y")

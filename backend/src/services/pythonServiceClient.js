@@ -36,9 +36,9 @@ class PythonServiceClient {
    * @param {string} filePath - Caminho do arquivo PDF
    * @returns {Promise<Object>} - Resultado da análise
    */
-  async analyzePDF(filePath) {
+  async analyzeArchive(filePath) {
     try {
-      console.log(`🚀 Enviando PDF para análise: ${filePath}`);
+      console.log(`🚀 Enviando Arquivo para análise: ${filePath}`);
 
       // Cria FormData
       const formData = new FormData();
