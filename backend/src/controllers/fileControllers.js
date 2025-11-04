@@ -19,11 +19,17 @@ export const uploadAndAnalyze = async (req, res) => {
     console.log('📊 Tipo:', req.file.mimetype);
 
     const isPDF = req.file.mimetype.includes('pdf');
+    const isXLSX = req.file.mimetype.includes('vnd.openxmlformats-officedocument.spreadsheetml.sheet'); //xlsx
+    const isXLS = req.file.mimetype.includes('application/vnd.ms-excel');
+
+    console.log("Pdf", isPDF);
+    console.log("XLSX", isXLSX);
+    console.log("XLS", isXLS);
 
     let analysisResult;
 
     // ✅ ROTA PYTHON: PDFs usam o microserviço Python
-    if (isPDF) {
+    if (isPDF || isXLS || isXLSX) {
       console.log('🐍 Usando serviço Python para análise...');
 
       // Verifica se serviço está online
@@ -33,7 +39,7 @@ export const uploadAndAnalyze = async (req, res) => {
       }
 
       // Envia para análise
-      analysisResult = await pythonService.analyzePDF(req.file.path);
+      analysisResult = await pythonService.analyzeArchive(req.file.path);
 
       console.log('✅ Análise Python concluída');
     }
@@ -48,6 +54,19 @@ export const uploadAndAnalyze = async (req, res) => {
       const structuredData = await readFileContent(req.file.path, req.file.mimetype);
       analysisResult = analyzeDuplicates(structuredData);
     }
+
+    // console.log('🐍 Usando serviço Python para análise...');
+
+    // // Verifica se serviço está online
+    // const health = await pythonService.healthCheck();
+    // if (!health) {
+    //   throw new Error('Serviço Python está offline. Certifique-se que está rodando na porta 5000.');
+    // }
+
+    // // Envia para análise
+    // analysisResult = await pythonService.analyzePDF(req.file.path);
+
+    // console.log('✅ Análise Python concluída');
 
     // Gera ID do processo
     const processId = Date.now().toString();
