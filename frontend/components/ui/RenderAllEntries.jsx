@@ -9,7 +9,7 @@ const RenderAllEntries = ({ analysis }) => {
     <div className="mb-8">
       <h3 className="text-xl font-bold text-white mb-4 flex items-center">
         <span className="w-2 h-6 bg-blue-500 rounded-full mr-3"></span>
-        Todas as Entradas ({analysis.allEntries.length})
+        Notas Válidas ({analysis.allEntries.length})
       </h3>
       <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
         <div className="overflow-x-auto max-h-96">
@@ -55,8 +55,8 @@ const RenderAllEntries = ({ analysis }) => {
                   <td className="p-4">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${entry.status === 'Duplicata'
-                          ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                          : 'bg-green-500/20 text-green-300 border border-green-500/30'
+                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                        : 'bg-green-500/20 text-green-300 border border-green-500/30'
                         }`}
                     >
                       {entry.status}

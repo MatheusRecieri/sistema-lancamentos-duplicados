@@ -115,6 +115,7 @@ class PDFReader:
 
             for pattern in patterns:
                 match = re.search(pattern, line)
+
                 if match:
                     entry = self._build_entry_from_regex(
                         match, pattern, line, idx, page_num

@@ -37,9 +37,9 @@ const RenderDuplicatesTable = ({ duplicates, title, type = 'exact' }) => {
                 <th className="text-left p-4 text-white/80 font-semibold">
                   Tipo
                 </th>
-                <th className="text-left p-4 text-white/80 font-semibold">
+                {/* <th className="text-left p-4 text-white/80 font-semibold">
                   Motivo
-                </th>
+                </th> */}
               </tr>
             </thead>
             <tbody>
@@ -61,8 +61,8 @@ const RenderDuplicatesTable = ({ duplicates, title, type = 'exact' }) => {
                   <td className="p-4 text-white/90">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${dup.ocorrencias > 2
-                          ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                        : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                         }`}
                     >
                       {dup.ocorrencias}x
@@ -71,14 +71,14 @@ const RenderDuplicatesTable = ({ duplicates, title, type = 'exact' }) => {
                   <td className="p-4 text-white/90">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${dup.tipo === 'DUPLICATA_REAL'
-                          ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                        : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                         }`}
                     >
                       {dup.tipo === 'DUPLICATA_REAL' ? 'Real' : 'Possível'}
                     </span>
                   </td>
-                  <td className="p-4 text-white/90">{dup.motivo}</td>
+                  {/* <td className="p-4 text-white/90">{dup.motivo}</td> */}
                 </tr>
               ))}
             </tbody>
