@@ -1,4 +1,4 @@
-#  modelos de dadosa
+#  modelos de dados
 
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any

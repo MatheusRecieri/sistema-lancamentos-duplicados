@@ -50,67 +50,11 @@ class PDFReader:
             for page_num, page in enumerate(pdf.pages, 1):
                 print(f"📄 Processando página {page_num}/{len(pdf.pages)}")
 
-                # entries = self._extract_with_layout(page, page_num)
                 entries = self._extract_with_regex(page, page_num)
-                # Tenta cada estratégia até uma funcionar
-                # for strategy in self.extraction_strategies:
-                #     entries = strategy(page, page_num)
-                #     if entries:
-                #         print(
-                #             f"   ✅ Estratégia {strategy.__name__} encontrou {len(entries)} entradas"
-                #         )
-                #         break
-                # else:
-                #     print(f"   ⚠️ Nenhuma estratégia funcionou na página {page_num}")
 
                 all_entries.extend(entries)
             print(f"🎯 Total extraído: {len(all_entries)} registros")
             return all_entries
-
-    # deprecated
-    # def _extract_with_layout(self, page, page_num: int) -> List[Dict[str, Any]]:
-    #     """
-    #     Extartégia 1: Extração baseada em layout preservado
-    #     Otimizada para formato ACOMPANHAMENTO DE ENTRADAS
-    #     """
-
-    #     text = page.extract_text(layout=True)
-    #     if not text:
-    #         return []
-
-    #     entries = []
-    #     lines = text.split("\n")
-
-    #     # Detecta onde os dados começam
-
-    #     data_start_idx = -1
-    #     for idx, line in enumerate(lines):
-    #         # proucura pela linha de cabeçalho das colunas
-    #         if "Codigo" in line and "Data" in line and "Nota" in line:
-    #             data_start_idx = idx + 1
-    #             print(f"Cabeçalho encontrado na linha {idx}")
-    #             break
-
-    #     if data_start_idx == -1:
-    #         data_start_idx = 10  # fallback: pula primeiras 10 linhas
-
-    #     for idx in range(data_start_idx, len(lines)):
-    #         line = lines[idx]
-
-    #         if not line.strip() or len(line.strip()) < 20:
-    #             continue
-
-    #         if self._is_total_or_footer(line):
-    #             break
-
-    #         if self._is_tax_subline(line):
-    #             continue
-
-    #         entry = self._parse_structured_line(line, idx, page_num)
-    #         if entry and self._is_valid_entry(entry):
-    #             entries.append(entry)
-
-    #     return entries
 
     # bom para planilhas
     def _extract_with_table(self, page, page_num) -> List[Dict[str, Any]]:

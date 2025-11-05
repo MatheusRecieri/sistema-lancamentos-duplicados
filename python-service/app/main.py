@@ -61,18 +61,6 @@ async def analyze_pf(file: UploadFile = File(...)):
     temp_path = None
 
     try:
-        # validação do tipo de arquivo
-        # if (
-        #     not file.filename.lower().endswith(".pdf")
-        #     or file.filename.lower().endswith(".docx")
-        #     or file.filename.lower().endswith(".xlsx")
-        #     or file.filename.lower().endswith(".txt")
-        # ):
-        #     raise HTTPException(
-        #         status_code=400,
-        #         detail="Apenas arquivos PDF, docx, xlsx e txt são suportados",
-        #     )
-
         # passar tipo de arquivo que vai entrar na função
         file_extension = os.path.splitext(str(file.filename))[1]
 
