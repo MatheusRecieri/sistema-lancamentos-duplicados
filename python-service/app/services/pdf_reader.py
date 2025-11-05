@@ -77,7 +77,7 @@ class PDFReader:
             col_map = self._map_columns(header)
 
             for row_idx, row in enumerate(table[1:], 1):
-                if row or len(row) < 3:
+                if not row or len(row) < 3:
                     continue
 
                 entry = self._parse_table_row(row, col_map, row_idx, page_num)
