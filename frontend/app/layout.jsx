@@ -3,6 +3,10 @@ import './globals.css';
 export const metadata = {
   title: 'Sistema de Verificação de Duplicatas',
   description: 'Sistema para verificar duplicatas de notas fiscais',
+  icons: {
+    shortcut: '/logo.png'
+
+  }
 };
 
 export default function RootLayout({ children }) {
