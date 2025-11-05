@@ -18,8 +18,6 @@ app.prepare().then(() => {
 
   const server = express();
 
-  // console.log(FRONTEND_URL);
-
   server.use(cors({
     origin: 'http://localhost:3000',
     credentials: true
@@ -36,12 +34,15 @@ app.prepare().then(() => {
   // CORREÇÃO: era app.search, agora é app.use
   server.use("/uploads", express.static(path.resolve("uploads")));
 
-  server.use("/files", fileRoutes); //antiga api
+  //rota de upload de arquivos
+  server.use("/files", fileRoutes);
 
+  //request para todas as rotas
   server.all('/{*splat}', (req, res) => {
     return handle(req, res);
   });
 
+  //portas 
   server.listen(PORT, (err) => {
     if (err) throw err;
     console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}`);
@@ -49,21 +50,3 @@ app.prepare().then(() => {
 
 
 });
-
-
-
-
-
-
-// Rotas principais
-// app.get("/api/files", fileRoutes);
-
-// app.get("/", (req, res) => {
-//   res.send("Servidor ativo e pronto!");
-// });
-
-// // app.get("frontend-next")
-
-// app.listen(PORT, () => {
-//   console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-// });

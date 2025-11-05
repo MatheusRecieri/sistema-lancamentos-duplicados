@@ -77,11 +77,10 @@ function FileUploader({ onUpload }) {
       onDrop={handleDrop}
     >
       <div
-        className={`p-10 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer ${
-          isDragOver
+        className={`p-10 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer ${isDragOver
             ? 'border-blue-400 bg-blue-50/40 shadow-lg'
             : ' bg-white/10 hover:bg-white/20'
-        } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
         onClick={() => !uploading && fileInputRef.current?.click()}
       >
         {uploading ? (
@@ -94,9 +93,8 @@ function FileUploader({ onUpload }) {
         ) : (
           <>
             <svg
-              className={`w-16 h-16 mx-auto ${
-                isDragOver ? 'text-blue-500' : 'text-[#f28c28]'
-              }`}
+              className={`w-16 h-16 mx-auto ${isDragOver ? 'text-blue-500' : 'text-[#f28c28]'
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -123,7 +121,7 @@ function FileUploader({ onUpload }) {
             </button>
             <p className="text-sm text-white/70 mt-4">
               {/* Formatos suportados: PDF, DOCX, XLS, XLSX, TXT, CSV */}
-              Formatos suportados: PDF (por enquanto)
+              Formatos suportados: PDF
             </p>
           </>
         )}

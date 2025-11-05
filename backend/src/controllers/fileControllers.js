@@ -19,18 +19,12 @@ export const uploadAndAnalyze = async (req, res) => {
     console.log('📊 Tipo:', req.file.mimetype);
 
     const isPDF = req.file.mimetype.includes('pdf');
-    const isXLSX = req.file.mimetype.includes('vnd.openxmlformats-officedocument.spreadsheetml.sheet'); //xlsx
-    const isXLS = req.file.mimetype.includes('application/vnd.ms-excel');
-
-    console.log("Pdf", isPDF);
-    console.log("XLSX", isXLSX);
-    console.log("XLS", isXLS);
 
     let analysisResult;
 
     // ✅ ROTA PYTHON: PDFs usam o microserviço Python
-    if (isPDF || isXLS || isXLSX) {
-      console.log('🐍 Usando serviço Python para análise...');
+    if (isPDF) {
+      console.log('Usando serviço Python para análise...');
 
       // Verifica se serviço está online
       const health = await pythonService.healthCheck();
@@ -43,32 +37,21 @@ export const uploadAndAnalyze = async (req, res) => {
 
       console.log('✅ Análise Python concluída');
     }
-    // ✅ FALLBACK: Outros formatos usam Node.js
+    // Log de erro do arquivo
     else {
-      console.log('📊 Usando análise Node.js (Excel/Word)...');
+      // console.log('📊 Usando análise Node.js (Excel/Word)...');
+      console.log('Não foi possivel identificar o tipo de arquivo');
 
       // Importa dinamicamente apenas se necessário
-      const { readFileContent } = await import("../services/fileReaderService.js");
-      const { analyzeDuplicates } = await import("../services/analysisService.js");
+      // const { readFileContent } = await import("../services/fileReaderService.js");
+      // const { analyzeDuplicates } = await import("../services/analysisService.js");
 
-      const structuredData = await readFileContent(req.file.path, req.file.mimetype);
-      analysisResult = analyzeDuplicates(structuredData);
+      // const structuredData = await readFileContent(req.file.path, req.file.mimetype);
+      // analysisResult = analyzeDuplicates(structuredData);
+
     }
 
-    // console.log('🐍 Usando serviço Python para análise...');
-
-    // // Verifica se serviço está online
-    // const health = await pythonService.healthCheck();
-    // if (!health) {
-    //   throw new Error('Serviço Python está offline. Certifique-se que está rodando na porta 5000.');
-    // }
-
-    // // Envia para análise
-    // analysisResult = await pythonService.analyzePDF(req.file.path);
-
-    // console.log('✅ Análise Python concluída');
-
-    // Gera ID do processo
+    //varaivel que gera um ID para o processo
     const processId = Date.now().toString();
 
     // Formata resposta padronizada
