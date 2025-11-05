@@ -1,9 +1,9 @@
 import React from 'react';
-// import { fileService } from '../../services/api';
 import { useFileUpload } from 'frontend/hooks/useFileUpload';
 import RenderAllEntries from '../ui/RenderAllEntries';
 import RenderDuplicatesTable from '../ui/RenderDuplicates';
 
+//body página principal
 const Body = ({ analysis }) => {
   const { downloadExcel } = useFileUpload();
 
@@ -42,7 +42,6 @@ const Body = ({ analysis }) => {
   };
 
   // Função para renderizar todas as entradas
-
   return (
     <div className="mt-8">
       {/* Resumo da Análise */}
@@ -75,7 +74,7 @@ const Body = ({ analysis }) => {
         </div>
       )}
 
-      {/* ✅ Passa analysis como prop para os componentes */}
+      {/* Passa analysis como prop para os componentes */}
       <RenderDuplicatesTable
         duplicates={analysis.duplicates}
         title="Duplicatas Confirmadas"
@@ -120,6 +119,5 @@ const Body = ({ analysis }) => {
     </div>
   );
 };
-
 
 export default Body;

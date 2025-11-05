@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 function UploadedFiles({ files }) {
-  // console.log(files);
 
+  //verificação se foii feito o upload de algum arquivo
   if (files.length === 0) {
     return (
       <div className="mt-6 text-center bg-white/10 backdrop-blur-md rounded-2xl p-6 text-white/80">

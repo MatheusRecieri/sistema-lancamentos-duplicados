@@ -24,21 +24,6 @@ function FileUploader({ onUpload }) {
     }
   };
 
-  //manipulador de clique no botão
-  // const handleButtonClick = () => {
-  //   fileInputRef.current?.click();
-  // };
-
-  //manipulador de drag and drop
-  // const handleDragOver = event => {
-  //   event.preventDefault();
-  //   setIsDragOver(true);
-  // };
-
-  // const handleDragLeave = () => {
-  //   setIsDragOver(false);
-  // };
-
   const handleDrop = event => {
     event.preventDefault();
     setIsDragOver(false);
@@ -46,6 +31,7 @@ function FileUploader({ onUpload }) {
     processFiles(files);
   };
 
+  //função que captura itens para serem processados
   const processFiles = async files => {
     if (files.length === 0) return;
 
@@ -78,8 +64,8 @@ function FileUploader({ onUpload }) {
     >
       <div
         className={`p-10 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer ${isDragOver
-            ? 'border-blue-400 bg-blue-50/40 shadow-lg'
-            : ' bg-white/10 hover:bg-white/20'
+          ? 'border-blue-400 bg-blue-50/40 shadow-lg'
+          : ' bg-white/10 hover:bg-white/20'
           } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
         onClick={() => !uploading && fileInputRef.current?.click()}
       >
@@ -107,7 +93,7 @@ function FileUploader({ onUpload }) {
               />
             </svg>
             <p className="text-white/90 mt-4 mb-6 text-lg font-medium">
-              Arraste arquivos aqui ou
+              Arraste PDFs aqui ou
             </p>
             <button
               type="button"
@@ -117,10 +103,10 @@ function FileUploader({ onUpload }) {
               }}
               className="bg-[#f28c28] hover:bg-[#f39b41] text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 focus:ring-2 focus:ring-[#f28c28] shadow-lg"
             >
-              Selecionar Arquivos
+              Selecionar PDFs
             </button>
             <p className="text-sm text-white/70 mt-4">
-              {/* Formatos suportados: PDF, DOCX, XLS, XLSX, TXT, CSV */}
+              {/* Formatos suportados: PDF*/}
               Formatos suportados: PDF
             </p>
           </>
@@ -129,7 +115,7 @@ function FileUploader({ onUpload }) {
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".pdf,.docx,.xls,.xlsx,.txt,.csv"
+          accept=".pdf"
           onChange={handleFileChange}
           className="hidden"
           disabled={uploading}

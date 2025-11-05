@@ -3,12 +3,12 @@ import dotenv from "dotenv";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const fileService = {
+  //faz o upload de arquivo
   async uploadFile(file) {
     const formData = new FormData();
     formData.append('file', file);
 
-    // console.log(API_BASE_URL);
-
+    //post na rota uploads
     const response = await fetch(`${API_BASE_URL}/files/upload`, {
       method: 'POST',
       body: formData,
@@ -22,6 +22,7 @@ export const fileService = {
     return await response.json();
   },
 
+  //faz o download de arquivos em excel
   downloadExcel(processId) {
     return new Promise((resolve, reject) => {
       try {

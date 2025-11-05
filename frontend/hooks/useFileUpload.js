@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fileService } from 'frontend/services/api';
 
+//hook para upload de aruivos
 export const useFileUpload = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -26,7 +27,7 @@ export const useFileUpload = () => {
 
   const downloadExcel = async processId => {
     try {
-      console.log(`🎯 Solicitando download para: ${processId}`);
+      console.log(`Solicitando download para: ${processId}`);
       await fileService.downloadExcel(processId);
       return true;
     } catch (err) {

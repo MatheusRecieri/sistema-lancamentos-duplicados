@@ -18,7 +18,7 @@ function Header({ title, onMenuItemClick }) {
           {['Upload', 'Resultados', 'Sobre'].map((item, i) => (
             <li key={i}>
               <button
-                onClick={() => handleClick(item)} // 👈 chama a função ao clicar
+                onClick={() => handleClick(item)} //chama a função ao clicar
                 className="text-white/80 hover:text-[#f28c28] transition-colors duration-200 font-medium focus:outline-none"
               >
                 {item}
