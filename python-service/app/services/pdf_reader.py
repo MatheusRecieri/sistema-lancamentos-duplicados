@@ -8,6 +8,7 @@ from app.utils.normalizer import (
     clean_date,
     clean_supplier_name,
 )
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
 class PDFReader:
@@ -21,16 +22,6 @@ class PDFReader:
             self._extract_with_table,
             self._extract_with_regex,
         ]
-
-    def extract_raw_text(self, pdf_path: str) -> str:
-        # extrai o texto brutodo pdf para debug
-
-        with pdfplumber.open(pdf_path) as pdf:
-            text = ""
-            for page in pdf.pages:
-                text += page.extract_text() or ""
-
-            return text
 
     def extract_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
         """
