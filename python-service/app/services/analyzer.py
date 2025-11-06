@@ -242,7 +242,7 @@ class DuplicateAnalyzer:
                     "notaSerie": entry.get("notaSerie", "N/A"),
                     "valorContabil": entry.get("valorContabil", "0,00"),
                     "diferencaDias": self._calc_date_diff(
-                        first.get("data"), entry.get("data")
+                        first.get("data"), first.get("data")
                     ),
                 }
                 for entry in entries

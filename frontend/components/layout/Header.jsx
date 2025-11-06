@@ -19,7 +19,7 @@ function Header({ title, onMenuItemClick }) {
             <li key={i}>
               <button
                 onClick={() => handleClick(item)} //chama a função ao clicar
-                className="text-white/80 hover:text-[#f28c28] transition-colors duration-200 font-medium focus:outline-none"
+                className="text-white/80 hover:text-primary[#f28c28] transition-colors duration-200 font-medium focus:outline-none"
               >
                 {item}
               </button>
