@@ -1,7 +1,8 @@
 from typing import List, Dict, Any, Set
 from datetime import datetime
-from app.utils.normalizer import normalize_text
 from rapidfuzz import fuzz
+from app.utils.normalizer import normalize_text
+from concurrent.futures import ProcessPoolExecutor
 
 
 class DuplicateAnalyzer:
@@ -9,12 +10,13 @@ class DuplicateAnalyzer:
     Analisador de duplicatas com comparação fuzzy e múltiplos critérios
     """
 
-    def __init__(self, similarity_threshold: float = 85.0):
+    def __init__(self, similarity_threshold: float = 85.0, max_workers: int = 4):
         """
         Args:
             similarity_threshold: Threshold para similaridade (0-100)
         """
         self.similarity_threshold = similarity_threshold
+        self.max_workers = max_workers
 
     def analyze_duplicates(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
