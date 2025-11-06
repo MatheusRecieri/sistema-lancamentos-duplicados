@@ -9,7 +9,7 @@ const RenderAllEntries = ({ analysis }) => {
     <div className="mb-8">
       <h3 className="text-xl font-bold text-white mb-4 flex items-center">
         <span className="w-2 h-6 bg-blue-500 rounded-full mr-3"></span>
-        Notas Válidas ({analysis.allEntries.length})
+        Notas Unicas ({analysis.allEntries.length})
       </h3>
       <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
         <div className="overflow-x-auto max-h-96">
