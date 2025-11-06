@@ -16,8 +16,7 @@ class PDFReader:
     Leitor de PDF robusto para mútiplas estrategias de extração
     """
 
-    def __init__(self, max_workers: int = 4):
-        self.max_workers = max_workers
+    def __init__(self):
         self.extraction_strategies = [
             # self._extract_with_layout,
             self._extract_with_table,
@@ -37,32 +36,16 @@ class PDFReader:
         print(f"🔍 Iniciando extração do PDF: {pdf_path}")
 
         with pdfplumber.open(pdf_path) as pdf:
-            total_pages = len(pdf.pages)
-            print(f"Total de páginas: {total_pages}")
+            all_entries = []
 
-            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            for page_num, page in enumerate(pdf.pages, 1):
+                print(f"📄 Processando página {page_num}/{len(pdf.pages)}")
 
-                futures = [
-                    executor.submit(self._process_page, page, page_num)
-                    for page_num, page in enumerate(pdf.pages, 1)
-                ]
-                all_entries = []
+                entries = self._extract_with_regex(page, page_num)
 
-                for future in futures:
-                    entries = future.result()
-                    all_entries.extend(entries)
-
-                print(f"🎯 Total extraído: {len(all_entries)} registros")
-                return all_entries
-
-    def _process_page(self, page, page_num: int) -> List[Dict[str, Any]]:
-        """
-        Processa um única página
-        """
-
-        print(f"Processando página {page_num}")
-        entries = self._extract_with_regex(page, page_num)
-        return entries
+                all_entries.extend(entries)
+            print(f"🎯 Total extraído: {len(all_entries)} registros")
+            return all_entries
 
     # bom para planilhas
     def _extract_with_table(self, page, page_num) -> List[Dict[str, Any]]:
