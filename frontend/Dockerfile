@@ -6,28 +6,23 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependências
-RUN npm install
+RUN npm ci
 
-# Copiar arquivos de configuração
+# Copiar arquivos de configuração e o código
 COPY jsconfig.json* ./
-COPY next.config.js* ./
-COPY postcss.config.js* ./
-COPY tailwind.config.js* ./
-
-# Copiar código do frontend
+COPY next.config.mjs* ./
+COPY postcss.config.mjs* ./
+COPY tailwind.config.mjs* ./
 COPY frontend ./frontend
 
-# Build
+# Entrar na pasta frontend
+WORKDIR /app/frontend
+
+# Fazer build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-
-# Fazer build (agora vai funcionar!)
 RUN npm run build
 
-# Verificar se criou
-RUN ls -la frontend/.next || echo "ERRO: Build não gerou .next"
-
+# Expor porta e iniciar o servidor
 EXPOSE 3000
-
-# Iniciar Next.js
-CMD ["npx", "next", "start", "frontend", "-p", "3000"]
+CMD ["npx", "next", "start", "-p", "3000"]
