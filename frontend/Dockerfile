@@ -13,7 +13,6 @@ COPY frontend/ .
 COPY ../jsconfig.json /app/jsconfig.json
 COPY ../next.config.mjs /app/next.config.mjs
 COPY ../postcss.config.mjs /app/postcss.config.mjs
-COPY ../tailwind.config.mjs /app/tailwind.config.mjs
 
 # Fazer build de produção
 ENV NEXT_TELEMETRY_DISABLED=1
