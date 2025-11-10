@@ -1,38 +1,33 @@
-# Estágio 1: Base
-FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat
+FROM node:20-alpine
+
 WORKDIR /app
 
-# Estágio 2: Dependências
-FROM base AS deps
-WORKDIR /app
+# Copiar package.json da raiz
 COPY package*.json ./
-RUN npm ci
 
-# Estágio 3: Build
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY package*.json ./
-COPY jsconfig.json ./
+# Instalar dependências
+RUN npm install
+
+# Copiar arquivos de configuração
+COPY jsconfig.json* ./
 COPY next.config.js* ./
+COPY postcss.config.js* ./
+COPY tailwind.config.js* ./
+
+# Copiar código do frontend
 COPY frontend ./frontend
+
+# Build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+
+# Fazer build (agora vai funcionar!)
 RUN npm run build
 
-# Estágio 4: Produção
-FROM base AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-COPY --from=builder /app/frontend/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-USER nextjs
+# Verificar se criou
+RUN ls -la frontend/.next || echo "ERRO: Build não gerou .next"
+
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+
+# Iniciar Next.js
+CMD ["npx", "next", "start", "frontend", "-p", "3000"]

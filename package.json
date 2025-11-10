@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon backend/server.js",
-    "build": "next build frontend",
+    "build": "cd frontend && npx build frontend",
     "start": "node backend/server.js",
     "lint": "eslint"
   },
