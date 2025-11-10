@@ -10,7 +10,7 @@ COPY postcss.config.mjs* ./
 COPY tailwind.config.mjs* ./
 
 # Copiar código do frontend (para dentro da raiz do container)
-COPY frontend ./frontend
+COPY ./frontend
 
 # Copiar também as pastas principais para a raiz, pois o Next vai procurá-las aqui
 RUN cp -r frontend/app ./ || true
