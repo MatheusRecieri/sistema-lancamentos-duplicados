@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Serviço Python (FastAPI)
   python-service:
     build:
       context: ./python-service
@@ -23,7 +22,6 @@ services:
           cpus: '2'
           memory: 4G
 
-  # Backend API (Express)
   backend:
     build:
       context: .
@@ -45,7 +43,6 @@ services:
     depends_on:
       - python-service
 
-  # Frontend (Next.js)
   frontend:
     build:
       context: .
