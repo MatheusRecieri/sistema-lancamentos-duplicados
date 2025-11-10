@@ -1,50 +1,64 @@
+version: '3.8'
+
 services:
-  frontend:
+  python-service:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    container_name: sistema_frontend
+      context: ./python-service
+      dockerfile: Dockerfile
+    container_name: invoice-python
+    restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./python-service/logs:/app/logs
     environment:
-      - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
-      - API_URL=http://backend:4000
-    depends_on:
-      - backend
-    restart: always
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
 
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: sistema_backend
+    container_name: invoice-backend
+    restart: unless-stopped
     ports:
       - "4000:4000"
     volumes:
       - ./uploads:/app/uploads
-      - ./logs:/app/logs
+      - ./backend/logs:/app/logs
     environment:
       - NODE_ENV=production
       - PORT=4000
       - PYTHON_SERVICE_URL=http://python-service:5000
+      - FRONTEND_URL=http://localhost:3000
+    networks:
+      - app-network
     depends_on:
       - python-service
-    restart: always
 
-  python-service:
+  frontend:
     build:
-      context: ./python-service
-      dockerfile: Dockerfile
-    container_name: sistema_python
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: invoice-frontend
+    restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "3000:3000"
     environment:
-      - FLASK_ENV=production
-    volumes:
-      - ./uploads:/app/uploads
-    restart: always
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:4000/api
+    networks:
+      - app-network
+    depends_on:
+      - backend
 
 networks:
-  default:
-    name: sistema_network
+  app-network:
+    driver: bridge
