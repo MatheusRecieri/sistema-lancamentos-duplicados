@@ -22,7 +22,7 @@ COPY . .
 EXPOSE 5000
 
 # Iniciar com gunicorn
-CMD ["gunicorn", "main:app", \
+CMD ["gunicorn", "app.main:app", \
      "-w", "4", \
      "-k", "uvicorn.workers.UvicornWorker", \
      "-b", "0.0.0.0:5000", \
