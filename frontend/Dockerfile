@@ -4,7 +4,7 @@ RUN apk add --no-cache libc6-compat
 
 # Etapa de dependências
 FROM base AS deps
-COPY package*.json ./
+COPY package.json ./
 RUN npm ci
 
 # Etapa de build

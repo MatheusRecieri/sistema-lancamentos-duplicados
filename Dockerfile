@@ -34,13 +34,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copiar arquivos de configuração da RAIZ
-COPY package*.json ./
+COPY package.json ./
 COPY jsconfig.json ./
-COPY postcss.config.js* ./
-COPY tailwind.config.js* ./
+COPY postcss.config.mjs* ./
 
 # ⚠️ IMPORTANTE: Se você tiver next.config.js na raiz, copie também
-COPY next.config.js* ./
+COPY next.config.mjs* ./
 
 # Copiar TODO o código do frontend
 COPY frontend ./frontend
