@@ -25,7 +25,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Verificar se criou
-RUN ls -la frontend/.next || echo "ERRO: Build não gerou .next"
+RUN ls -la frontend/.next
 
 EXPOSE 3000
 

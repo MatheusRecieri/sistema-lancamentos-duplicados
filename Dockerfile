@@ -54,7 +54,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Verificar se o build foi criado
-RUN ls -la .next || echo "⚠️ Diretório .next não encontrado!"
+RUN ls -la .next
 
 
 # ========================================
