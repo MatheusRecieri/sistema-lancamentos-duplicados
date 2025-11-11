@@ -57,7 +57,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copiar arquivos públicos
-COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
+# COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
 
 # Copiar build do Next.js
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
