@@ -76,7 +76,7 @@ RUN mkdir -p .next
 RUN chown nextjs:nodejs .next
 
 # Copiar arquivos públicos (se existirem)
-COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/frontend 
 
 # Copiar arquivos de build do Next.js
 # Next.js em modo standalone cria tudo em .next/standalone
