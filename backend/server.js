@@ -14,37 +14,43 @@ const app = next({ dev, dir: './frontend' });
 const handle = app.getRequestHandler();
 
 
-app.prepare().then(() => {
+const server = express();
 
-  const server = express();
+// console.log(FRONTEND_URL);
 
-  // console.log(FRONTEND_URL);
+server.use(cors({
+  origin: process.env.PORT,
+  credentials: true
+}));
 
-  server.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true
-  }));
+server.use(express.json());
 
-  server.use(express.json());
-
-  // Middleware de log ANTES das rotas
-  server.use((req, res, next) => {
-    // console.log(`📨 ${req.method} ${req.path}`);
-    next();
-  });
-
-  // CORREÇÃO: era app.search, agora é app.use
-  server.use("/uploads", express.static(path.resolve("uploads")));
-
-  server.use("/files", fileRoutes); //antiga api
-
-  server.all('/{*splat}', (req, res) => {
-    return handle(req, res);
-  });
-
-  server.listen(PORT, (err) => {
-    if (err) throw err;
-    console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}`);
-  });
-
+// Middleware de log ANTES das rotas
+server.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.path}`);
+  next();
 });
+
+// CORREÇÃO: era app.search, agora é app.use
+server.use("/uploads", express.static(path.resolve("uploads")));
+
+server.use("/files", fileRoutes); //antiga api
+
+server.all('/{*splat}', (req, res) => {
+  return handle(req, res);
+});
+
+// Tratamento de erros
+server.use((err, req, res, next) => {
+  console.error('❌ Erro:', err);
+  res.status(500).json({
+    success: false,
+    error: err.message
+  });
+});
+
+server.listen(PORT, (err) => {
+  if (err) throw err;
+  console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}`);
+});
+
