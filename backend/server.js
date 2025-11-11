@@ -1,7 +1,8 @@
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import fileRoutes from "./routes/fileRoutes.js";  // ⚠️ Ajuste o path se necessário
+import fileRoutes from ".src/routes/fileRoutes.js";  // ⚠️ Ajuste o path se necessário
 import path from "path";
 
 dotenv.config();
