@@ -1,57 +1,89 @@
-# Estágio 1: Base
+# ========================================
+# ESTÁGIO 1: Imagem Base
+# ========================================
 FROM node:20-alpine AS base
+
+# Instalar dependências necessárias
 RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
-# Estágio 2: Dependências
+
+# ========================================
+# ESTÁGIO 2: Instalar Dependências
+# ========================================
 FROM base AS deps
+
 WORKDIR /app
+
+# Copiar package.json da RAIZ (onde estão as dependências)
 COPY package*.json ./
+
+# Instalar todas as dependências (incluindo devDependencies para o build)
 RUN npm ci
 
-# Estágio 3: Build
+
+# ========================================
+# ESTÁGIO 3: Build da Aplicação
+# ========================================
 FROM base AS builder
+
 WORKDIR /app
 
-# Copiar node_modules
+# Copiar node_modules instalados
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copiar configurações
+# Copiar arquivos de configuração da RAIZ
 COPY package*.json ./
 COPY jsconfig.json ./
-COPY next.config.mjs ./
+COPY postcss.config.js* ./
+COPY tailwind.config.js* ./
 
-# Copiar código do frontend
+# ⚠️ IMPORTANTE: Se você tiver next.config.js na raiz, copie também
+COPY next.config.js* ./
+
+# Copiar TODO o código do frontend
 COPY frontend ./frontend
 
-# Configurar ambiente
+# Definir variáveis de ambiente para o build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Fazer build (a partir da raiz, apontando para frontend)
+# Fazer o build do Next.js
+# O Next.js vai procurar o app em frontend/
 RUN npm run build
 
-# Verificar o que foi gerado
-RUN ls -la frontend/.next || echo "❌ .next não encontrado"
+# Verificar se o build foi criado
+RUN ls -la .next || echo "⚠️ Diretório .next não encontrado!"
 
-# Estágio 4: Produção
+
+# ========================================
+# ESTÁGIO 4: Imagem de Produção
+# ========================================
 FROM base AS runner
+
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Criar usuário
+# Criar usuário não-root por segurança
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copiar build (todos os caminhos relativos a /app do builder)
-COPY --from=builder --chown=nextjs:nodejs /app/frontend/.next ./frontend/.next
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/next.config.mjs ./
-COPY --from=builder /app/frontend ./frontend
+# Criar diretórios necessários
+RUN mkdir -p .next
+RUN chown nextjs:nodejs .next
 
+# Copiar arquivos públicos (se existirem)
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
+
+# Copiar arquivos de build do Next.js
+# Next.js em modo standalone cria tudo em .next/standalone
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Mudar para usuário não-root
 USER nextjs
 
 EXPOSE 3000
@@ -59,5 +91,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Iniciar Next.js apontando para a pasta frontend
-CMD ["npx", "next", "start", "frontend", "-p", "3000"]
+# Comando para iniciar
+CMD ["node", "server.js"]
