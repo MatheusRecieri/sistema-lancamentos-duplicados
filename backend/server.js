@@ -35,9 +35,9 @@ server.use("/uploads", express.static(path.resolve("uploads")));
 
 server.use("/files", fileRoutes); //antiga api
 
-server.all('/{*splat}', (req, res) => {
-  return handle(req, res);
-});
+// server.all('/{*splat}', (req, res) => {
+//   return handle(req, res);
+// });
 
 server.listen(PORT, (err) => {
   if (err) throw err;
