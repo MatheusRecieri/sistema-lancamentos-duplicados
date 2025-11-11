@@ -11,7 +11,7 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-WORKDIR /app/frontend
+WORKDIR /frontend
 RUN npm run build
 
 # Verificar se o build foi criado
