@@ -13,8 +13,8 @@ COPY . .
 # Etapa final
 FROM node:18-alpine
 
-WORKDIR /app
-COPY --from=builder /app ./
+WORKDIR /frontend
+COPY --from=builder /frontend ./
 
 USER node
 

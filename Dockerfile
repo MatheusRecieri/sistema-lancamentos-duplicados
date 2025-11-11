@@ -59,7 +59,7 @@ COPY --chown=appuser:nodejs backend ./backend
 
 # Copiar build do Next.js
 COPY --from=builder --chown=appuser:nodejs /app/.next ./.next
-COPY --from=builder --chown=appuser:nodejs /app/frontend/public ./frontend/public
+COPY --from=builder --chown=appuser:nodejs /app/frontend/ ./frontend
 
 USER appuser
 
