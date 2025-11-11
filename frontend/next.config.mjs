@@ -5,6 +5,7 @@ const nextConfig = {
 
   output: 'standalone',
 
+<<<<<<< HEAD:next.config.mjs
   pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
 
   env: {
@@ -23,3 +24,6 @@ export default nextConfig;
 // }
 
 // export default nextConfig;  
+=======
+module.exports = nextConfig
+>>>>>>> parent of f16c18a (Corrigindo next.config.mjs para export default):frontend/next.config.mjs
