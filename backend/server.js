@@ -13,34 +13,38 @@ const dev = process.env.NODE_ENV !== 'development';
 const app = next({ dev, dir: './frontend' });
 const handle = app.getRequestHandler();
 
-const server = express();
 
-// console.log(FRONTEND_URL);
+app.prepare().then(() => {
 
-server.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
+  const server = express();
 
-server.use(express.json());
+  // console.log(FRONTEND_URL);
 
-// Middleware de log ANTES das rotas
-server.use((req, res, next) => {
-  // console.log(`📨 ${req.method} ${req.path}`);
-  next();
+  server.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }));
+
+  server.use(express.json());
+
+  // Middleware de log ANTES das rotas
+  server.use((req, res, next) => {
+    // console.log(`📨 ${req.method} ${req.path}`);
+    next();
+  });
+
+  // CORREÇÃO: era app.search, agora é app.use
+  server.use("/uploads", express.static(path.resolve("uploads")));
+
+  server.use("/files", fileRoutes); //antiga api
+
+  server.all('/{*splat}', (req, res) => {
+    return handle(req, res);
+  });
+
+  server.listen(PORT, (err) => {
+    if (err) throw err;
+    console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}`);
+  });
+
 });
-
-// CORREÇÃO: era app.search, agora é app.use
-server.use("/uploads", express.static(path.resolve("uploads")));
-
-server.use("/files", fileRoutes); //antiga api
-
-server.all('/{*splat}', (req, res) => {
-  return handle(req, res);
-});
-
-server.listen(PORT, (err) => {
-  if (err) throw err;
-  console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}`);
-});
-

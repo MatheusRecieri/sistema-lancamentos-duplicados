@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon backend/server.js",
-    "build": "next build ./frontend",
-    "start": "next start ./frontend",
+    "build": "next build frontend",
+    "start": "node backend/server.js",
     "lint": "eslint"
   },
   "dependencies": {

@@ -21,4 +21,4 @@ ENV NODE_ENV=production
 ENV PORT=4000
 
 # Iniciar servidor API
-CMD ["node", "backend/server.js"]
+CMD ["node", "backend/api-server.js"]
