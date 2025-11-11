@@ -20,7 +20,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar todas as dependências (incluindo devDependencies para o build)
-RUN npm ci
+RUN npm i
 
 
 # ========================================
@@ -76,7 +76,7 @@ RUN mkdir -p .next
 RUN chown nextjs:nodejs .next
 
 # Copiar arquivos públicos (se existirem)
-COPY --from=builder --chown=nextjs:nodejs /app/frontend 
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
 
 # Copiar arquivos de build do Next.js
 # Next.js em modo standalone cria tudo em .next/standalone
