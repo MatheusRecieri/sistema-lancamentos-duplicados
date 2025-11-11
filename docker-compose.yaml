@@ -16,20 +16,15 @@ services:
       - PYTHONUNBUFFERED=1
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 4G
 
   backend:
     build:
-      context: .                      # Context na RAIZ
-      dockerfile: backend/Dockerfile  # Dockerfile do backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: invoice-backend
     restart: unless-stopped
     ports:
-      - "4000:4000"
+      - "4000:4000"  # ⚠️ Porta 4000
     volumes:
       - ./uploads:/app/uploads
       - ./backend/logs:/app/logs
@@ -44,15 +39,15 @@ services:
 
   frontend:
     build:
-      context: .                      # Context na RAIZ
-      dockerfile: frontend/Dockerfile # Dockerfile do frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: invoice-frontend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3000:3000"  # ⚠️ Porta 3000
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:4000/api
+      - NEXT_PUBLIC_API_URL=http://localhost:4000/api
     networks:
       - app-network
     depends_on:
