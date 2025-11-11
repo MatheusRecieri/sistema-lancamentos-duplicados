@@ -40,6 +40,8 @@ ENV NODE_ENV=production
 # Build do Next.js
 RUN npm run build
 
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Verificar se o build foi criado
 RUN ls -la .next && echo "✅ Build do Next.js criado!" || echo "❌ Build falhou!"
 
@@ -60,8 +62,6 @@ RUN adduser --system --uid 1001 nextjs
 # COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
 
 # Copiar build do Next.js
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
