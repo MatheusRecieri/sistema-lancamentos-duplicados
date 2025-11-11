@@ -24,8 +24,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: .                      # Context na RAIZ
+      dockerfile: backend/Dockerfile  # Dockerfile do backend
     container_name: invoice-backend
     restart: unless-stopped
     ports:
@@ -37,7 +37,6 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - PYTHON_SERVICE_URL=http://python-service:5000
-      - FRONTEND_URL=http://localhost:3000
     networks:
       - app-network
     depends_on:
@@ -45,15 +44,15 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: .                      # Context na RAIZ
+      dockerfile: frontend/Dockerfile # Dockerfile do frontend
     container_name: invoice-frontend
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:4000/api
+      - NEXT_PUBLIC_API_URL=http://backend:4000/api
     networks:
       - app-network
     depends_on:

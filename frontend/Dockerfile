@@ -1,29 +1,81 @@
+# ========================================
+# ESTÁGIO 1: Imagem Base
+# ========================================
 FROM node:20-alpine AS base
-WORKDIR /app
 RUN apk add --no-cache libc6-compat
+WORKDIR /app
 
-# Etapa de dependências
+# ========================================
+# ESTÁGIO 2: Instalar Dependências
+# ========================================
 FROM base AS deps
-COPY package.json ./
+WORKDIR /app
+
+# ⚠️ IMPORTANTE: Copiar package.json E package-lock.json da RAIZ
+COPY package*.json ./
+
+# Instalar dependências (npm ci precisa do package-lock.json)
 RUN npm ci
 
-# Etapa de build
+# ========================================
+# ESTÁGIO 3: Build do Next.js
+# ========================================
 FROM base AS builder
-WORKDIR /app/frontend
-COPY --from=deps /app/frontend/node_modules ./node_modules
-COPY frontend ./ 
+WORKDIR /app
+
+# Copiar node_modules instalados
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copiar arquivos de configuração da RAIZ
+COPY package*.json ./
+COPY jsconfig.json* ./
+COPY postcss.config.mjs* ./
+COPY next.config.mjs* ./
+
+# Copiar código do frontend
+COPY frontend ./frontend
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Build do Next.js
 RUN npm run build
 
 # Verificar se o build foi criado
-RUN ls -la .next || echo "⚠️ Build do Next.js não foi gerado!"
+RUN ls -la .next && echo "✅ Build do Next.js criado!" || echo "❌ Build falhou!"
 
-# Etapa final (runner)
+# ========================================
+# ESTÁGIO 4: Imagem de Produção
+# ========================================
 FROM base AS runner
 WORKDIR /app
-COPY --from=builder /app/frontend/.next ./.next
-COPY --from=builder /app/frontend/package.json ./package.json
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Criar usuário não-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copiar dependências de produção
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
+
+# Copiar código do frontend
 COPY --from=builder /app/frontend ./frontend
-COPY --from=builder /app/frontend/node_modules ./node_modules
-USER node
+
+# Copiar build do Next.js
+COPY --from=builder /app/.next ./frontend/.next
+
+# Ajustar permissões
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
 EXPOSE 3000
-CMD ["npm", "start"]
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Usar next start
+CMD ["npx", "next", "start", "./frontend", "-p", "3000"]
