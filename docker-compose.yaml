@@ -22,10 +22,6 @@ services:
           cpus: '2'
           memory: 4G
 
-<<<<<<< HEAD
-  # Backend + Frontend (Next.js + Express integrados)
-=======
->>>>>>> parent of bd93cb9 (Corrigindo dockerfile 10)
   backend:
     build:
       context: .              # ← Context na RAIZ
@@ -33,11 +29,7 @@ services:
     container_name: invoice-backend
     restart: unless-stopped
     ports:
-<<<<<<< HEAD
-      - "3000:3000"
-=======
       - "4000:4000"
->>>>>>> parent of bd93cb9 (Corrigindo dockerfile 10)
     volumes:
       - ./uploads:/app/uploads
       - ./backend/logs:/app/logs
