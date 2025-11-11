@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Python Service (FastAPI)
   python-service:
     build:
       context: ./python-service
@@ -23,7 +22,10 @@ services:
           cpus: '2'
           memory: 4G
 
+<<<<<<< HEAD
   # Backend + Frontend (Next.js + Express integrados)
+=======
+>>>>>>> parent of bd93cb9 (Corrigindo dockerfile 10)
   backend:
     build:
       context: .              # ← Context na RAIZ
@@ -31,19 +33,39 @@ services:
     container_name: invoice-backend
     restart: unless-stopped
     ports:
+<<<<<<< HEAD
       - "3000:3000"
+=======
+      - "4000:4000"
+>>>>>>> parent of bd93cb9 (Corrigindo dockerfile 10)
     volumes:
       - ./uploads:/app/uploads
       - ./backend/logs:/app/logs
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=4000
       - PYTHON_SERVICE_URL=http://python-service:5000
       - FRONTEND_URL=http://localhost:3000
     networks:
       - app-network
     depends_on:
       - python-service
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: invoice-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:4000/api
+    networks:
+      - app-network
+    depends_on:
+      - backend
 
 networks:
   app-network:
