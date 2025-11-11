@@ -1,33 +1,38 @@
-FROM node:20-alpine
-
+# Estágio 1: Base
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Copiar configs da raiz
+#OI
+# Estágio 2: Dependências
+FROM base AS deps
+WORKDIR /app
 COPY package*.json ./
-COPY jsconfig.json* ./
-COPY next.config.mjs* ./
-COPY postcss.config.mjs* ./
-COPY tailwind.config.mjs* ./
-
-# Copiar código do frontend (para dentro da raiz do container)
-COPY ./frontend
-
-# Copiar também as pastas principais para a raiz, pois o Next vai procurá-las aqui
-RUN cp -r frontend/app ./ || true
-RUN cp -r frontend/pages ./ || true
-RUN cp -r frontend/components ./ || true
-RUN cp -r frontend/hooks ./ || true
-RUN cp -r frontend/services ./ || true
-RUN cp -r frontend/styles ./ || true
-
-# Instalar dependências
 RUN npm ci
 
-# Fazer build
+# Estágio 3: Build
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+COPY jsconfig.json ./
+COPY next.config.js* ./
+COPY frontend ./frontend
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN npm run build
 
-# Expor porta e iniciar o servidor
+# Estágio 4: Produção
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+COPY --from=builder /app/frontend/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
 EXPOSE 3000
-CMD ["npx", "next", "start", "-p", "3000"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]
