@@ -11,6 +11,7 @@ WORKDIR /app
 FROM base AS deps
 WORKDIR /app
 COPY package*.json ./
+
 RUN npm ci
 
 # ========================================
