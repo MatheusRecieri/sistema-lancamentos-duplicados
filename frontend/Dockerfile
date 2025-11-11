@@ -15,7 +15,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package*.json ./ 
 COPY jsconfig.json ./ 
-COPY next.config.js* ./ 
+COPY next.config.mjs* ./ 
 COPY frontend ./frontend
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
