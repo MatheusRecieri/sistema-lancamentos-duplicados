@@ -65,7 +65,7 @@ COPY --from=deps /app/package.json ./package.json
 COPY --from=builder /app/frontend ./frontend
 
 # Copiar build do Next.js
-COPY --from=builder /app/.next ./frontend/.next
+COPY --from=builder /app/.next ./.next
 
 # Ajustar permissões
 RUN chown -R nextjs:nodejs /app
