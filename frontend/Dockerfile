@@ -1,14 +1,3 @@
-# Estágio 1: Base
-FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-# Estágio 2: Dependências
-FROM base AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-
 # Estágio 3: Build
 FROM base AS builder
 WORKDIR /app
