@@ -15,7 +15,7 @@ const dev = process.env.NODE_ENV !== 'development';
 
 const server = express();
 
-// console.log(FRONTEND_URL);
+console.log(FRONTEND_URL);
 
 server.use(cors({
   origin: 'http://localhost:3000',
