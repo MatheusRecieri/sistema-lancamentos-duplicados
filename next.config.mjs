@@ -5,7 +5,7 @@ const nextConfig = {
 
   output: 'standalone',
 
-  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
+  // pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
 
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
