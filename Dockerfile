@@ -19,8 +19,8 @@ WORKDIR /app
 # Copiar package.json da RAIZ (onde estão as dependências)
 COPY package*.json ./
 
-# Instalar todas as dependências (incluindo devDependencies para o build)
-RUN npm i
+RUN npm ci
+
 
 
 # ========================================
