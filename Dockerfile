@@ -1,95 +1,51 @@
 # ========================================
-# ESTÁGIO 1: Imagem Base
+# Backend Express (SEM Next.js)
 # ========================================
 FROM node:20-alpine AS base
-
-# Instalar dependências necessárias
 RUN apk add --no-cache libc6-compat
-
 WORKDIR /app
 
-
 # ========================================
-# ESTÁGIO 2: Instalar Dependências
+# Instalar Dependências de Produção
 # ========================================
 FROM base AS deps
-
 WORKDIR /app
 
-# Copiar package.json da RAIZ (onde estão as dependências)
 COPY package*.json ./
 
-RUN npm ci
-
-
-
-# ========================================
-# ESTÁGIO 3: Build da Aplicação
-# ========================================
-FROM base AS builder
-
-WORKDIR /app
-
-# Copiar node_modules instalados
-COPY --from=deps /app/node_modules ./node_modules
-
-# Copiar arquivos de configuração da RAIZ
-COPY package*.json ./
-COPY jsconfig.json ./
-COPY postcss.config.js* ./
-COPY tailwind.config.js* ./
-
-# ⚠️ IMPORTANTE: Se você tiver next.config.js na raiz, copie também
-COPY next.config.js* ./
-
-# Copiar TODO o código do frontend
-COPY frontend ./frontend
-
-# Definir variáveis de ambiente para o build
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
-
-# Fazer o build do Next.js
-# O Next.js vai procurar o app em frontend/
-RUN npm run build
-
-# Verificar se o build foi criado
-RUN ls -la .next
-
+# Instalar apenas dependências de produção
+RUN npm ci --only=production
 
 # ========================================
-# ESTÁGIO 4: Imagem de Produção
+# Imagem de Produção
 # ========================================
 FROM base AS runner
-
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
-# Criar usuário não-root por segurança
+# Criar usuário não-root
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 expressuser
 
 # Criar diretórios necessários
-RUN mkdir -p .next
-RUN chown nextjs:nodejs .next
+RUN mkdir -p uploads logs
+RUN chown -R expressuser:nodejs uploads logs
 
-# Copiar arquivos públicos (se existirem)
-COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./public
+# Copiar dependências de produção
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package*.json ./
 
-# Copiar arquivos de build do Next.js
-# Next.js em modo standalone cria tudo em .next/standalone
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copiar APENAS o código do backend
+COPY --chown=expressuser:nodejs backend ./backend
 
 # Mudar para usuário não-root
-USER nextjs
+USER expressuser
 
-EXPOSE 3000
+EXPOSE 4000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+ENV PORT=4000
+ENV PYTHON_SERVICE_URL=http://python-service:5000
 
-# Comando para iniciar
-CMD ["node", "server.js"]
+# ⚠️ IMPORTANTE: Iniciar APENAS o servidor Express
+CMD ["node", "backend/server.js"]
