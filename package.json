@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon backend/server.js",
-    "build": "cd frontend && npx next build",
-    "start": "node backend/server.js",
+    "build": "next build ./frontend",
+    "start": "next start ./frontend",
     "lint": "eslint"
   },
   "dependencies": {

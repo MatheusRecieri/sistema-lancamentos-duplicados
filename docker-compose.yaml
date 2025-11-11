@@ -23,15 +23,15 @@ services:
           cpus: '2'
           memory: 4G
 
-  # Backend (Express + Next.js integrado)
+  # Backend + Frontend (Next.js + Express integrados)
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: .              # ← Context na RAIZ
+      dockerfile: Dockerfile  # ← Dockerfile da RAIZ (não backend/Dockerfile)
     container_name: invoice-backend
     restart: unless-stopped
     ports:
-      - "3000:3000"  # Frontend E Backend na mesma porta
+      - "3000:3000"
     volumes:
       - ./uploads:/app/uploads
       - ./backend/logs:/app/logs
