@@ -1,0 +1,26 @@
+# Servidor
+gunicorn
+uvicorn[standard]
+fastapi
+python-multipart
+
+# PDF Processing
+pdfplumber
+pypdf
+pytesseract
+pdf2image
+pillow
+poppler-utils
+
+# Excel/Data
+pandas
+openpyxl
+xlrd
+xlsxwriter
+
+# Análise de texto
+rapidfuzz
+python-Levenshtein
+
+# Utilitários
+python-dotenv
