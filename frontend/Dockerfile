@@ -11,7 +11,6 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-WORKDIR /frontend
 RUN npm run build
 
 # Verificar se o build foi criado
@@ -20,10 +19,10 @@ RUN ls -la .next || echo "⚠️ Build do Next.js não foi gerado!"
 # Etapa final (runner)
 FROM base AS runner
 WORKDIR /app
-COPY --from=builder /app/frontend/.next ./.next
-COPY --from=builder /app/frontend/package.json ./package.json
-COPY --from=builder /app/frontend/public ./public || true
-COPY --from=builder /app/frontend/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/public ./public || true
+COPY --from=builder /app/node_modules ./node_modules
 USER node
 EXPOSE 3000
 CMD ["npm", "start"]
