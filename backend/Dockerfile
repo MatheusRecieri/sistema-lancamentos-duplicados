@@ -1,21 +1,24 @@
-# Etapa de build
-FROM node:18 AS builder
+FROM node:20-alpine
 
 WORKDIR /app
+
+# Copiar package.json da RAIZ
 COPY package*.json ./
-RUN npm install
 
-COPY . .
+# Instalar apenas dependências de produção
+RUN npm ci --only=production
 
-# Se o backend não tem build (só Node/Express), pode pular o build
-# RUN npm run build  # só se existir
+# Copiar código do backend
+COPY backend ./backend
 
-# Etapa final
-FROM node:18-alpine
+# Criar diretórios necessários
+RUN mkdir -p uploads logs
 
-WORKDIR /frontend
-COPY --from=builder /frontend ./
+EXPOSE 4000
 
-USER node
+# Variáveis de ambiente
+ENV NODE_ENV=production
+ENV PORT=4000
 
-CMD ["node", "server.js"]
+# Iniciar servidor API
+CMD ["node", "backend/api-server.js"]
