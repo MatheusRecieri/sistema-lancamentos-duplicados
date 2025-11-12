@@ -22,7 +22,8 @@ const allowedOrigins = [
   'https://localhost:3000',
   'https://localhost:4000',
   'https://localhost:5000',
-  'https://localhost:4000/api/files/upload'
+  'https://localhost:4000/api/files/upload',
+  'https://172.23.60.15:4000/api/files/upload',
 ].filter(Boolean);
 
 server.use(cors({
@@ -35,7 +36,7 @@ server.use(cors({
     return callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization']
+  allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization', '*']
 }));
 
 server.use(express.json());
