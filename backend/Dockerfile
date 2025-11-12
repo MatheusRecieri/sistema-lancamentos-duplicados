@@ -22,3 +22,5 @@ ENV PORT=4000
 
 # Iniciar servidor API
 CMD ["node", "backend/server.js"]
+
+RUN npm install cors 
