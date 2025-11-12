@@ -1,78 +1,69 @@
-
 import express from "express";
+import next from "next";
 import cors from "cors";
 import dotenv from "dotenv";
-import fileRoutes from "./src/routes/fileRoutes.js";  // ⚠️ Ajuste o path se necessário
+import fileRoutes from "./routes/fileRoutes.js"
 import path from "path";
 
 dotenv.config();
 
-const PORT = process.env.PORT;
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://python-service:5000';
-
-const server = express();
-
-// ========================================
-// CORS - Configuração para Docker
-// ========================================
-const allowedOrigins = [
-  'http://172.23.60.15',
-  'https://localhost/api/files/upload',
-  'https://172.23.60.15/api/files/upload',
-].filter(Boolean);
-
-server.use(cors()); // permite todas as origens
+const FRONTEND_URL = process.env.FRONTEND_URL;
+const PORT = process.env.PORT || 3000;
+const dev = process.env.NODE_ENV !== 'development';
+const app = next({ dev, dir: './frontend' });
+const handle = app.getRequestHandler();
 
 
-server.use(express.json());
+app.prepare().then(() => {
 
-// ========================================
-// Middleware de Log
-// ========================================
-server.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path}`);
-  next();
-});
+  const server = express();
 
-// ========================================
-// Servir arquivos estáticos
-// ========================================
-server.use("/uploads", express.static(path.resolve("uploads")));
+  // console.log(FRONTEND_URL);
 
-// ========================================
-// Rotas da API
-// ========================================
-server.use("/api/files", fileRoutes);
+  server.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }));
 
-// Health check
-server.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'backend',
-    port: PORT,
-    pythonService: PYTHON_SERVICE_URL
+  server.use(express.json());
+
+  // Middleware de log ANTES das rotas
+  server.use((req, res, next) => {
+    // console.log(`📨 ${req.method} ${req.path}`);
+    next();
   });
+
+  // CORREÇÃO: era app.search, agora é app.use
+  server.use("/uploads", express.static(path.resolve("uploads")));
+
+  server.use("/files", fileRoutes); //antiga api
+
+  server.all('/{*splat}', (req, res) => {
+    return handle(req, res);
+  });
+
+  server.listen(PORT, (err) => {
+    if (err) throw err;
+    console.log(`🚀 Servidor Next.js/Express rodando em ${FRONTEND_URL}`);
+  });
+
+
 });
 
-// Rota de teste
-server.get('/api/test', (req, res) => {
-  res.json({ message: '✅ Backend funcionando!' });
-});
 
-// ========================================
-// Iniciar Servidor
-// ========================================
-server.listen(PORT, '0.0.0.0', (err) => {
-  if (err) throw err;
-  console.log(`
-========================================
-🚀 Backend Express rodando!
-========================================
-📍 Porta: ${PORT}
-🐍 Python Service: ${PYTHON_SERVICE_URL}
-🌐 CORS: ${allowedOrigins.join(', ')}
-========================================
-  `);
-});
 
-export default server;
+
+
+
+// Rotas principais
+// app.get("/api/files", fileRoutes);
+
+// app.get("/", (req, res) => {
+//   res.send("Servidor ativo e pronto!");
+// });
+
+// // app.get("frontend-next")
+
+// app.listen(PORT, () => {
+//   console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+// });
