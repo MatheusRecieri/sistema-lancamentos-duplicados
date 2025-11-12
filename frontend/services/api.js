@@ -9,7 +9,7 @@ export const fileService = {
     formData.append('file', file);
 
     //post na rota uploads
-    const response = await fetch(`${API_BASE_URL}/files/upload`, {
+    const response = await fetch(`/files/upload`, {
       method: 'POST',
       body: formData,
     });
