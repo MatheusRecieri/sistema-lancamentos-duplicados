@@ -2,7 +2,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import fs from 'fs';
 
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:5000';
+const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL;
 
 /**
  * Cliente para comunicação com o microserviço Python
