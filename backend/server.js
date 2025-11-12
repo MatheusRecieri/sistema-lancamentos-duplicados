@@ -16,17 +16,20 @@ const server = express();
 // CORS - Configuração para Docker
 // ========================================
 const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://frontend:3000',
+  'http://backend:4000',
+  'http://nginx:80',
   'http://172.23.60.15:3000',
   'http://172.23.60.15:4000',
-  'http://172.23.60.15:5000',
-  'https://localhost:3000',
-  'https://localhost:4000',
-  'https://localhost:5000',
-  'https://localhost:4000/api/files/upload',
-  'https://172.23.60.15:4000/api/files/upload',
-].filter(Boolean);
+];
 
-server.use(cors()); // permite todas as origens
+server.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization']
+}));
 
 
 server.use(express.json());
