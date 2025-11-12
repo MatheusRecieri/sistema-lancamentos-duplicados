@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: invoice-python
     restart: unless-stopped
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     volumes:
       - ./uploads:/app/uploads
       - ./python-service/logs:/app/logs
@@ -21,8 +21,8 @@ services:
       dockerfile: backend/Dockerfile
     container_name: invoice-backend
     restart: unless-stopped
-    ports:
-      - "4000:4000"  # ⚠️ Porta 4000
+    expose:
+      - "4000"
     volumes:
       - ./uploads:/app/uploads
       - ./backend/logs:/app/logs
@@ -41,15 +41,29 @@ services:
       dockerfile: frontend/Dockerfile
     container_name: invoice-frontend
     restart: unless-stopped
-    ports:
-      - "3000:3000"  # ⚠️ Porta 3000
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://172.23.60.15:4000
+      - NEXT_PUBLIC_API_URL=/api       # ✅ usa caminho relativo
     networks:
       - app-network
     depends_on:
       - backend
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: invoice-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
 
 networks:
   app-network:
