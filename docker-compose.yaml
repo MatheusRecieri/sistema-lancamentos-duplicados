@@ -47,7 +47,7 @@ services:
       - "3000:3000"  # ⚠️ Porta 3000
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://172.18.0.4:4000/api
+      - NEXT_PUBLIC_API_URL=http://172.18.0.4:4000
     networks:
       - app-network
     depends_on:
