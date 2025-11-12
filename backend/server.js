@@ -18,6 +18,10 @@ const server = express();
 const allowedOrigins = [
   'http://172.23.60.15:3000',
   'http://172.23.60.15:4000',
+  'http://172.23.60.15:5000',
+  'https://localhost:3000',
+  'https://localhost:4000',
+  'https://localhost:5000',
   'https://localhost:4000/api/files/upload'
 ].filter(Boolean);
 
