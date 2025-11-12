@@ -170,4 +170,4 @@ async def analyze_pdf_debug(file: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True, log_level="info")
+    uvicorn.run("main:app", host="172.23.60.15", port=5000, reload=True, log_level="info")
