@@ -7,7 +7,7 @@ import path from "path";
 
 dotenv.config();
 
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT;
 const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://python-service:5000';
 
 const server = express();
@@ -22,19 +22,10 @@ const allowedOrigins = [
   'http://invoice-frontend:3000',
 ].filter(Boolean);
 
-server.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log(`⚠️ Origin bloqueada: ${origin}`);
-      callback(null, true);
-    }
-  },
-  credentials: true,
+app.use(cors({
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization']
 }));
 
 server.use(express.json());

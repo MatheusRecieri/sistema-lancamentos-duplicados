@@ -45,23 +45,24 @@ services:
       - "3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=/api       # ✅ usa caminho relativo
+      - NEXT_PUBLIC_API_URL=http://nginx/api       # ✅ usa caminho relativo
     networks:
       - app-network
     depends_on:
       - backend
 
   nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
+    image: nginx:latest
     container_name: invoice-nginx
     restart: unless-stopped
     ports:
       - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - frontend
       - backend
+      - python-service
     networks:
       - app-network
 
