@@ -26,18 +26,8 @@ const allowedOrigins = [
   'https://172.23.60.15:4000/api/files/upload',
 ].filter(Boolean);
 
-server.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization', '*']
-}));
+server.use(cors()); // permite todas as origens
+
 
 server.use(express.json());
 
