@@ -18,19 +18,17 @@ const server = express();
 const allowedOrigins = [
   'http://172.23.60.15:3000',
   'http://172.23.60.15:4000',
-  'http://frontend:3000',
-  'http://invoice-frontend:3000',
 ].filter(Boolean);
 
 server.use(cors({
-  // origin: function (origin, callback) {
-  //   if (!origin) return callback(null, true);
-  //   if (allowedOrigins.indexOf(origin) === -1) {
-  //     var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-  //     return callback(new Error(msg), false);
-  //   }
-  //   return callback(null, true);
-  // },
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Authorization']
 }));
