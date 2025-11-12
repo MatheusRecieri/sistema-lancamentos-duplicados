@@ -30,7 +30,7 @@ export const fileService = {
 
         // Criar link temporário
         const link = document.createElement('a');
-        link.href = `${API_BASE_URL}/files/export/excel/${processId}`;
+        link.href = `files/export/excel/${processId}`;
         link.target = '_blank'; // Abre em nova aba/guia
         link.download = `analise-duplicatas-${processId}.xlsx`;
 
