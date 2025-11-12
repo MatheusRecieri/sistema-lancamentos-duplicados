@@ -1,7 +1,7 @@
 
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import fileRoutes from "./src/routes/fileRoutes.js";  // ⚠️ Ajuste o path se necessário
 import path from "path";
 
@@ -15,27 +15,27 @@ const server = express();
 // ========================================
 // CORS - Configuração para Docker
 // ========================================
-const allowedOrigins = [
-  'http://172.23.60.15:3000',
-  'http://172.23.60.15:4000',
-  'http://172.23.60.15:3000',
-  'http://invoice-frontend:3000',
-].filter(Boolean);
+// const allowedOrigins = [
+//   'http://172.23.60.15:3000',
+//   'http://172.23.60.15:4000',
+//   'http://172.23.60.15:3000',
+//   'http://invoice-frontend:3000',
+// ].filter(Boolean);
 
-server.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log(`⚠️ Origin bloqueada: ${origin}`);
-      callback(null, true);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// server.use(cors({
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true);
+//     if (allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       console.log(`⚠️ Origin bloqueada: ${origin}`);
+//       callback(null, true);
+//     }
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 
 server.use(express.json());
 
