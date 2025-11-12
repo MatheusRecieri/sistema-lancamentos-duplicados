@@ -16,9 +16,9 @@ const server = express();
 // CORS - Configuração para Docker
 // ========================================
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:4000',
-  'http://frontend:3000',
+  'http://172.23.60.15:3000',
+  'http://172.23.60.15:4000',
+  'http://172.23.60.15:3000',
   'http://invoice-frontend:3000',
 ].filter(Boolean);
 
