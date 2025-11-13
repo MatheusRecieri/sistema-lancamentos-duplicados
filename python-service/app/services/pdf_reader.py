@@ -77,7 +77,7 @@ class PDFReader:
 
         return entries
 
-    def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
+      def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
         """
         Estratégia 3: Extração via regex
         Fallback para PDFs sem estrutura clara
@@ -91,70 +91,111 @@ class PDFReader:
 
         # Padrões de extração
         patterns = [
-            # Padrão 1: Completo com todas as colunas visíveis
-            # Captura: Código, Data, Nota+Serie, Fornecedor (texto longo), Valor Contábil
-            # Ignora: Espécie, Código Fornecedor, CFOP, AC, UF que vêm entre Nota e Valor
-            {
-                "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+(\d+\s+)?([A-Z][\w\s&\-\.]+?)\s+[\d.,]+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 5,
-                    "valor": 6,
-                },
-            },
-            # Padrão 2: Captura com flexibilidade para colunas intermediárias
-            {
-                "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 4,
-                    "valor": 5,
-                },
-            },
-            # Padrão 3: Mais genérico - busca texto longo (fornecedor) seguido de vários números
-            {
-                "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+.*?([A-Z][A-Z\s&\-\.]{10,}?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 4,
-                    "valor": 5,
-                },
-            },
-            # Padrão 4: Simplificado - após nome do fornecedor, pula tudo até encontrar valor após UF
-            {
-                "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-ZÀ-Ú][A-ZÀ-Ú\s&\-\.]+?)\s+[\d\s]+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 4,
-                    "valor": 5,
-                },
-            },
+            # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
+            # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
+            r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)",
+            # Padrão sem código: DATA NOTA FORNECEDOR VALOR
+            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
+            # Padrão minimalista: FORNECEDOR DATA VALOR
+            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
         ]
 
         for idx, line in enumerate(lines):
             if self._is_non_data_line(line):
                 continue
 
-            for pattern_dict in patterns:
-                match = re.search(pattern_dict["pattern"], line)
+            for pattern in patterns:
+                match = re.search(pattern, line)
 
                 if match:
                     entry = self._build_entry_from_regex(
-                        match, pattern_dict["groups"], line, idx, page_num
+                        match, pattern, line, idx, page_num
                     )
                     if entry and self._is_valid_entry(entry):
                         entries.append(entry)
                         break
 
         return entries
+
+
+    # def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
+    #     """
+    #     Estratégia 3: Extração via regex
+    #     Fallback para PDFs sem estrutura clara
+    #     """
+    #     text = page.extract_text()
+    #     if not text:
+    #         return []
+
+    #     entries = []
+    #     lines = text.split("\n")
+
+    #     # Padrões de extração
+    #     patterns = [
+    #         # Padrão 1: Completo com todas as colunas visíveis
+    #         # Captura: Código, Data, Nota+Serie, Fornecedor (texto longo), Valor Contábil
+    #         # Ignora: Espécie, Código Fornecedor, CFOP, AC, UF que vêm entre Nota e Valor
+    #         {
+    #             "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+(\d+\s+)?([A-Z][\w\s&\-\.]+?)\s+[\d.,]+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+    #             "groups": {
+    #                 "codigo": 1,
+    #                 "data": 2,
+    #                 "nota": 3,
+    #                 "fornecedor": 5,
+    #                 "valor": 6,
+    #             },
+    #         },
+    #         # Padrão 2: Captura com flexibilidade para colunas intermediárias
+    #         {
+    #             "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+    #             "groups": {
+    #                 "codigo": 1,
+    #                 "data": 2,
+    #                 "nota": 3,
+    #                 "fornecedor": 4,
+    #                 "valor": 5,
+    #             },
+    #         },
+    #         # Padrão 3: Mais genérico - busca texto longo (fornecedor) seguido de vários números
+    #         {
+    #             "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+.*?([A-Z][A-Z\s&\-\.]{10,}?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+    #             "groups": {
+    #                 "codigo": 1,
+    #                 "data": 2,
+    #                 "nota": 3,
+    #                 "fornecedor": 4,
+    #                 "valor": 5,
+    #             },
+    #         },
+    #         # Padrão 4: Simplificado - após nome do fornecedor, pula tudo até encontrar valor após UF
+    #         {
+    #             "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-ZÀ-Ú][A-ZÀ-Ú\s&\-\.]+?)\s+[\d\s]+[A-Z]{2}\s+([\d.,]+)",
+    #             "groups": {
+    #                 "codigo": 1,
+    #                 "data": 2,
+    #                 "nota": 3,
+    #                 "fornecedor": 4,
+    #                 "valor": 5,
+    #             },
+    #         },
+    #     ]
+
+    #     for idx, line in enumerate(lines):
+    #         if self._is_non_data_line(line):
+    #             continue
+
+    #         for pattern_dict in patterns:
+    #             match = re.search(pattern_dict["pattern"], line)
+
+    #             if match:
+    #                 entry = self._build_entry_from_regex(
+    #                     match, pattern_dict["groups"], line, idx, page_num
+    #                 )
+    #                 if entry and self._is_valid_entry(entry):
+    #                     entries.append(entry)
+    #                     break
+
+    #     return entries
 
     def _find_header_line(self, lines: List[str]) -> int:
         """Encontra a linha do cabeçalho"""
