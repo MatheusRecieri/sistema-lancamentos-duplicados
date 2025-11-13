@@ -92,28 +92,64 @@ class PDFReader:
         lines = text.split("\n")
 
         # Padrões de extração
+        # patterns = [
+        #     # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
+        #     # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
+        #     # r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d-\d{3}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+        #     r"^\d{3,6}\s+\d{2}/\d{2}/\d{4}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+\d+\s+\d+\s*-\s*([A-Z0-9\s\.\-]+?)\s+\d-\d+[A-Z]{2}\s+([\d.,]+)",
+        #     # Padrão sem código: DATA NOTA FORNECEDOR VALOR
+        #     r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)\s+([\d.,])",
+        #     # Padrão minimalista: FORNECEDOR DATA VALOR
+        #     r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+        # ]
+
         patterns = [
-            # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
-            # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-            # r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d-\d{3}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-            r"^\d{3,6}\s+\d{2}/\d{2}/\d{4}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+\d+\s+\d+\s*-\s*([A-Z0-9\s\.\-]+?)\s+\d-\d+[A-Z]{2}\s+([\d.,]+)",
-            # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)\s+([\d.,])",
-            # Padrão minimalista: FORNECEDOR DATA VALOR
-            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+            # Padrão Principal: Captura exata conforme especificação
+            {
+                "pattern": r"(\d{1,4})\s+(\d{2}/\d{2}/\d{4})\s+(\d{1,15})\s+\d{1,3}\s+\d{1,3}\s+([A-Z0-9][\w\s\-\.]+?)\s+\d-\d{3,4}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+                "groups": {
+                    "codigo": 1,
+                    "data": 2,
+                    "nota": 3,
+                    "fornecedor": 4,
+                    "valor": 5,
+                },
+            },
+            # Padrão Alternativo: Data com ano curto (DD/MM/AA)
+            {
+                "pattern": r"(\d{1,4})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d{1,15})\s+\d{1,3}\s+\d{1,3}\s+([A-Z0-9][\w\s\-\.]+?)\s+\d-\d{3,4}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+                "groups": {
+                    "codigo": 1,
+                    "data": 2,
+                    "nota": 3,
+                    "fornecedor": 4,
+                    "valor": 5,
+                },
+            },
+            # Padrão Flexível: Para variações no formato
+            {
+                "pattern": r"(\d{1,4})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d{1,15})\s+\d+\s+\d+\s+([A-Z0-9][\w\s\-\.&]+?)\s+\d+-?\d{3,4}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+                "groups": {
+                    "codigo": 1,
+                    "data": 2,
+                    "nota": 3,
+                    "fornecedor": 4,
+                    "valor": 5,
+                },
+            },
         ]
 
         for idx, line in enumerate(lines):
             if self._is_non_data_line(line):
                 continue
 
-            for pattern in patterns:
-                match = re.search(pattern, line)
+            for pattern_dict in patterns:
+                match = re.search(pattern_dict["pattern"], line)
                 print("log do match", match)
 
                 if match:
                     entry = self._build_entry_from_regex(
-                        match, pattern, line, idx, page_num
+                        match, pattern_dict, line, idx, page_num
                     )
                     if entry and self._is_valid_entry(entry):
                         entries.append(entry)
