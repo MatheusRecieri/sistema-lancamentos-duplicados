@@ -91,13 +91,18 @@ class PDFReader:
 
         # Padrões de extração
         patterns = [
-            # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
-            # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-            r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)",
-            # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
-            # Padrão minimalista: FORNECEDOR DATA VALOR
-            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+            # Padrão 1: Completo com todas as colunas visíveis
+            # Captura: Código, Data, Nota+Serie, Fornecedor (texto longo), Valor Contábil
+            # Ignora: Espécie, Código Fornecedor, CFOP, AC, UF que vêm entre Nota e Valor
+            r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+(\d+\s+)?([A-Z][\w\s&\-\.]+?)\s+[\d.,]+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+            # Padrão 2: Captura com flexibilidade para colunas intermediárias
+            # Pula as colunas numéricas entre fornecedor e valor contábil
+            r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+            # Padrão 3: Mais genérico - busca texto longo (fornecedor) seguido de vários números até chegar ao valor contábil
+            # Assume que valor contábil está após a UF (2 letras maiúsculas)
+            r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+.*?([A-Z][A-Z\s&\-\.]{10,}?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+            # Padrão 4: Simplificado - após nome do fornecedor, pula tudo até encontrar valor após UF
+            r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-ZÀ-Ú][A-ZÀ-Ú\s&\-\.]+?)\s+[\d\s]+[A-Z]{2}\s+([\d.,]+)",
         ]
 
         for idx, line in enumerate(lines):
