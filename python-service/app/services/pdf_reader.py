@@ -77,55 +77,6 @@ class PDFReader:
 
         return entries
 
-    # def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
-    #     """
-    #     Estratégia 3: Extração via regex
-    #     Fallback para PDFs sem estrutura clara
-    #     """
-    #     text = page.extract_text()
-    #     if not text:
-    #         return []
-
-    #     entries = []
-    #     lines = text.split("\n")
-
-    #     # Padrões de extração
-    #     patterns = [
-    #         # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
-    #         # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-    #         # r"(\d{3,4})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+\s+(.+?)\s+\s+([\d.,]+)",
-    #         # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-    #         {
-    #             "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d-\d{3}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-    #             "groups": {
-    #                 "codigo": 1,
-    #                 "data": 2,
-    #                 "nota": 3,
-    #                 "fornecedor": 4,
-    #                 "valor": 5,
-    #             },
-    #         }
-    #         # Padrão minimalista: FORNECEDOR DATA VALOR
-    #         # r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
-    #     ]
-
-    #     for idx, line in enumerate(lines):
-    #         if self._is_non_data_line(line):
-    #             continue
-
-    #         for pattern in patterns:
-    #             match = re.search(pattern, line)
-
-    #             if match:
-    #                 entry = self._build_entry_from_regex(
-    #                     match, pattern, line, idx, page_num
-    #                 )
-    #                 if entry and self._is_valid_entry(entry):
-    #                     entries.append(entry)
-    #                     break
-
-    #     return entries
-
     def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
         """
         Estratégia 3: Extração via regex
@@ -138,11 +89,11 @@ class PDFReader:
         entries = []
         lines = text.split("\n")
 
-        # Padrões de extração
+        # Padrões de extração com mapeamento de grupos
         patterns = [
             # Padrão 1: Completo com todas as colunas visíveis
             # Captura: Código, Data, Nota+Serie, Fornecedor (texto longo), Valor Contábil
-            # Ignora: Espécie, Código Fornecedor, CFOP, AC, UF que vêm entre Nota e Valor
+            # Ignora: Espécie, Código Fornecedor, CFOP, AC, UF
             {
                 "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+(\d+\s+)?([A-Z][\w\s&\-\.]+?)\s+[\d.,]+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
                 "groups": {
@@ -153,9 +104,10 @@ class PDFReader:
                     "valor": 6,
                 },
             },
-            # Padrão 2: Captura com flexibilidade para colunas intermediárias
+            # Padrão 2: Com CFOP explícito (formato: 1-933)
+            # Ignora: Espécie, Código Fornecedor, CFOP (1-933), AC, UF
             {
-                "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+                "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d-\d{3}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
                 "groups": {
                     "codigo": 1,
                     "data": 2,
@@ -164,7 +116,7 @@ class PDFReader:
                     "valor": 5,
                 },
             },
-            # Padrão 3: Mais genérico - busca texto longo (fornecedor) seguido de vários números
+            # Padrão 3: Mais genérico - busca texto longo (fornecedor)
             {
                 "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+.*?([A-Z][A-Z\s&\-\.]{10,}?)\s+\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
                 "groups": {
@@ -175,7 +127,7 @@ class PDFReader:
                     "valor": 5,
                 },
             },
-            # Padrão 4: Simplificado - após nome do fornecedor, pula tudo até encontrar valor após UF
+            # Padrão 4: Simplificado - com suporte a caracteres acentuados
             {
                 "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-ZÀ-Ú][A-ZÀ-Ú\s&\-\.]+?)\s+[\d\s]+[A-Z]{2}\s+([\d.,]+)",
                 "groups": {
@@ -196,7 +148,7 @@ class PDFReader:
                 match = re.search(pattern_dict["pattern"], line)
 
                 if match:
-                    entry = self._build_entry_from_regex(
+                    entry = self._build_entry_from_regex_v2(
                         match, pattern_dict["groups"], line, idx, page_num
                     )
                     if entry and self._is_valid_entry(entry):
@@ -403,38 +355,7 @@ class PDFReader:
             "posicao": f"Pág {page_num}, Linha {row_num}",
         }
 
-    # def _build_entry_from_regex(
-    #     self, match, pattern: str, original_line: str, line_num: int, page_num: int
-    # ) -> Optional[Dict[str, Any]]:
-    #     """Constrói entrada a partir de match regex"""
-    #     groups = match.groups()
-
-    #     # Identifica qual padrão foi usado pelo número de grupos
-    #     if len(groups) >= 6:  # Padrão completo
-    #         codigo, data, nota, fornecedor, valor_contabil, valor = groups
-    #     elif len(groups) == 4:  # Sem código
-    #         data, nota, fornecedor, valor_contabil = groups
-    #         codigo = "N/A"
-    #         valor = valor_contabil
-    #     elif len(groups) == 3:  # Minimalista
-    #         fornecedor, data, valor_contabil = groups
-    #         codigo = "N/A"
-    #         nota = "N/A"
-    #         valor = valor_contabil
-    #     else:
-    #         return None
-
-    #     return {
-    #         "codigoFornecedor": str(codigo).strip(),
-    #         "fornecedor": fornecedor.strip(),
-    #         "data": clean_date(data),
-    #         "notaSerie": str(nota).strip(),
-    #         "valorContabil": clean_monetary_value(valor_contabil),
-    #         "valor": clean_monetary_value(valor),
-    #         "posicao": f"Pág {page_num}, Linha {line_num}",
-    #     }
-
-    def _build_entry_from_regex(
+    def _build_entry_from_regex_v2(
         self, match, groups_map: dict, line: str, line_idx: int, page_num: int
     ) -> Optional[Dict[str, Any]]:
         """
@@ -448,13 +369,12 @@ class PDFReader:
             line_idx: Índice da linha no documento
             page_num: Número da página
         """
-
         try:
-
+            # Extrai os valores usando o mapeamento de grupos
             codigo = (
                 match.group(groups_map.get("codigo", 1))
                 if "codigo" in groups_map
-                else None
+                else "N/A"
             )
             data = match.group(groups_map["data"])
             nota = match.group(groups_map["nota"])
@@ -464,32 +384,27 @@ class PDFReader:
             # Limpa e normaliza o nome do fornecedor
             fornecedor = re.sub(r"\s+", " ", fornecedor).strip()
 
-            # Remove caracteres especiais do final do nome do fornecedor
+            # Remove caracteres especiais e números do final do nome do fornecedor
             fornecedor = re.sub(r"[\d\s]+$", "", fornecedor).strip()
 
-            # Converte valor para float
-            valor = self._parse_currency(valor_str)
+            # Remove pontos e hífens do final
+            fornecedor = re.sub(r"[\.\-\s]+$", "", fornecedor).strip()
 
-            if not all([data, nota, fornecedor, valor]):
+            if not all([data, nota, fornecedor, valor_str]):
                 return None
 
-            # Normaliza a data
-            data_normalizada = self._normalize_date(data)
-
             return {
-                "codigo": codigo,
-                "data": data_normalizada,
-                "nota_fiscal": nota,
-                "fornecedor": fornecedor,
-                "valor": valor,
-                "linha_original": line.strip(),
-                "pagina": page_num,
-                "linha": line_idx,
-                "metodo_extracao": "regex_v2",
+                "codigoFornecedor": str(codigo).strip(),
+                "fornecedor": clean_supplier_name(fornecedor),
+                "data": clean_date(data),
+                "notaSerie": str(nota).strip(),
+                "valorContabil": clean_monetary_value(valor_str),
+                "valor": clean_monetary_value(valor_str),
+                "posicao": f"Pág {page_num}, Linha {line_idx}",
             }
 
         except (IndexError, ValueError, AttributeError) as e:
-            self.logger.debug(f"Erro ao construir entrada do regex: {e}")
+            print(f"⚠️ Erro ao construir entrada do regex: {e}")
             return None
 
     def _is_valid_entry(self, entry: Dict[str, Any]) -> bool:
