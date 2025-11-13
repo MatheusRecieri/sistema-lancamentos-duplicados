@@ -101,28 +101,28 @@ class DuplicateAnalyzer:
             "notasUnicas": notas_unicas,
         }
 
-    # def _filter_valid_entries(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    #     """Filtra apenas entradas válidas"""
-    #     valid = []
+    def _filter_valid_entries(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Filtra apenas entradas válidas"""
+        valid = []
 
-    #     for entry in data:
-    #         if not entry:
-    #             continue
+        for entry in data:
+            if not entry:
+                continue
 
-    #         # Validações
-    #         valor = entry.get("valorContabil", "0,00")
-    #         fornecedor = entry.get("fornecedor", "")
-    #         data_entry = entry.get("data", "")
+            # Validações
+            valor = entry.get("valorContabil", "0,00")
+            fornecedor = entry.get("fornecedor", "")
+            data_entry = entry.get("data", "")
 
-    #         if (
-    #             valor != "0,00"
-    #             and fornecedor
-    #             and fornecedor != "Desconhecido"
-    #             and data_entry
-    #         ):
-    #             valid.append(entry)
+            if (
+                valor != "0,00"
+                and fornecedor
+                and fornecedor != "Desconhecido"
+                and data_entry
+            ):
+                valid.append(entry)
 
-    #     return valid
+        return valid
 
     def _group_by_exact_match(
         self, entries: List[Dict[str, Any]]
