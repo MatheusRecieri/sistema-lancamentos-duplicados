@@ -97,7 +97,7 @@ class PDFReader:
             # Padrão sem código: DATA NOTA FORNECEDOR VALOR
             r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
             # Padrão minimalista: FORNECEDOR DATA VALOR
-            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+            # r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
         ]
 
         for idx, line in enumerate(lines):
