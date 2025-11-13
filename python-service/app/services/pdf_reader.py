@@ -93,7 +93,7 @@ class PDFReader:
         patterns = [
             # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
             # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-            r"(\d{3,4})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+\s+(.+?)\s+\s+([\d.,]+)",
+            # r"(\d{3,4})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+\s+(.+?)\s+\s+([\d.,]+)",
             # Padrão sem código: DATA NOTA FORNECEDOR VALOR
             r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
             # Padrão minimalista: FORNECEDOR DATA VALOR
