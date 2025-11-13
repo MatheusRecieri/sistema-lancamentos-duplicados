@@ -95,11 +95,11 @@ class PDFReader:
         patterns = [
             # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
             # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-            r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)",
+            # r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)",
             # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-            # r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+(.{10,}?)\s+([\d.,]+)",
+            # r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
             # Padrão minimalista: FORNECEDOR DATA VALOR
-            # r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
         ]
 
         for idx, line in enumerate(lines):
