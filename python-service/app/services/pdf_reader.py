@@ -21,6 +21,7 @@ class PDFReader:
             # self._extract_with_layout,
             self._extract_with_table,
             self._extract_with_regex,
+            self.extract_from_pdf,
         ]
 
     def extract_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
