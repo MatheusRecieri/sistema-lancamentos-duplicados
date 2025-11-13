@@ -95,11 +95,11 @@ class PDFReader:
         patterns = [
             # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
             # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-            r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)",
+            # r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)",
             # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
+            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+(.{10,}?)\s+([\d.,]+)",
             # Padrão minimalista: FORNECEDOR DATA VALOR
-            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+            # r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
         ]
 
         for idx, line in enumerate(lines):
@@ -181,86 +181,6 @@ class PDFReader:
         ]
 
         return any(pattern in line_lower for pattern in footer_patterns)
-
-    # def _parse_structured_line(
-    #     self, line: str, line_num: int, page_num: int
-    # ) -> Optional[Dict[str, Any]]:
-    #     """
-    #     Parse especializado para formato ACOMPANHAMENTO DE ENTRADAS
-    #     Formato esperado: Código | Data | Nota | Série | ... | Fornecedor | ... | Valor Contábil
-    #     """
-    #     # Remove espaços extras
-    #     parts = line.split()
-
-    #     if len(parts) < 8:
-    #         return None
-
-    #     try:
-    #         # Extração de campos fixos
-    #         codigo = parts[0]
-
-    #         # Procura pela data (formato DD/MM/YYYY)
-    #         data_idx = -1
-    #         for i, part in enumerate(parts):
-    #             if re.match(r"\d{2}/\d{2}/\d{4}", part):
-    #                 data_idx = i
-    #                 break
-
-    #         if data_idx == -1:
-    #             return None
-
-    #         data = parts[data_idx]
-
-    #         # Nota fiscal geralmente vem depois da data
-    #         nota = parts[data_idx + 1] if data_idx + 1 < len(parts) else "N/A"
-
-    #         # Procura pelo valor contábil (último valor antes dos impostos)
-    #         # Formato: 1.234,56 ou 234,56
-    #         valor_contabil = "0,00"
-    #         for i in range(len(parts) - 1, -1, -1):
-    #             if re.match(r"[\d.,]+", parts[i]) and "," in parts[i]:
-    #                 valor_contabil = parts[i]
-    #                 break
-
-    #         # Fornecedor está entre a série/espécie e o CFOP
-    #         # Geralmente após o 5º elemento até antes do valor
-    #         fornecedor_parts = []
-    #         in_fornecedor = False
-
-    #         for i in range(data_idx + 3, len(parts)):
-    #             part = parts[i]
-
-    #             # Para quando encontrar padrões de fim de fornecedor
-    #             if re.match(r"\d-\d+", part):  # CFOP (ex: 1-933)
-    #                 break
-
-    #             # Pula campos numéricos curtos (série, espécie)
-    #             if i <= data_idx + 5 and part.isdigit() and len(part) <= 2:
-    #                 continue
-
-    #             # Adiciona ao fornecedor
-    #             if not part.replace(".", "").replace(",", "").isdigit():
-    #                 fornecedor_parts.append(part)
-
-    #         fornecedor = (
-    #             " ".join(fornecedor_parts)
-    #             if fornecedor_parts
-    #             else "Fornecedor Desconhecido"
-    #         )
-
-    #         return {
-    #             "codigoFornecedor": codigo.strip(),
-    #             "fornecedor": clean_supplier_name(fornecedor),
-    #             "data": clean_date(data),
-    #             "notaSerie": nota.strip(),
-    #             "valorContabil": clean_monetary_value(valor_contabil),
-    #             "valor": clean_monetary_value(valor_contabil),
-    #             "posicao": f"Pág {page_num}, Linha {line_num}",
-    #         }
-
-    #     except Exception as e:
-    #         # Se falhar, não retorna nada
-    #         return None
 
     def _map_columns(self, header: List[str]) -> Dict[str, int]:
         """Mapeia colunas da tabela"""
