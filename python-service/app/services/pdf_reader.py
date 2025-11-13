@@ -403,94 +403,94 @@ class PDFReader:
             "posicao": f"Pág {page_num}, Linha {row_num}",
         }
 
-    def _build_entry_from_regex(
-        self, match, pattern: str, original_line: str, line_num: int, page_num: int
-    ) -> Optional[Dict[str, Any]]:
-        """Constrói entrada a partir de match regex"""
-        groups = match.groups()
-
-        # Identifica qual padrão foi usado pelo número de grupos
-        if len(groups) >= 6:  # Padrão completo
-            codigo, data, nota, fornecedor, valor_contabil, valor = groups
-        elif len(groups) == 4:  # Sem código
-            data, nota, fornecedor, valor_contabil = groups
-            codigo = "N/A"
-            valor = valor_contabil
-        elif len(groups) == 3:  # Minimalista
-            fornecedor, data, valor_contabil = groups
-            codigo = "N/A"
-            nota = "N/A"
-            valor = valor_contabil
-        else:
-            return None
-
-        return {
-            "codigoFornecedor": str(codigo).strip(),
-            "fornecedor": fornecedor.strip(),
-            "data": clean_date(data),
-            "notaSerie": str(nota).strip(),
-            "valorContabil": clean_monetary_value(valor_contabil),
-            "valor": clean_monetary_value(valor),
-            "posicao": f"Pág {page_num}, Linha {line_num}",
-        }
-
     # def _build_entry_from_regex(
-    #     self, match, groups_map: dict, line: str, line_idx: int, page_num: int
+    #     self, match, pattern: str, original_line: str, line_num: int, page_num: int
     # ) -> Optional[Dict[str, Any]]:
-    #     """
-    #     Constrói entrada a partir do match do regex usando mapeamento de grupos
+    #     """Constrói entrada a partir de match regex"""
+    #     groups = match.groups()
 
-    #     Args:
-    #         match: Objeto match do regex
-    #         groups_map: Dicionário mapeando campos para números dos grupos
-    #                    Ex: {'codigo': 1, 'data': 2, 'nota': 3, 'fornecedor': 4, 'valor': 5}
-    #         line: Linha original do texto
-    #         line_idx: Índice da linha no documento
-    #         page_num: Número da página
-    #     """
-
-    #     try:
-
-    #         codigo = (
-    #             match.group(groups_map.get("codigo", 1))
-    #             if "codigo" in groups_map
-    #             else None
-    #         )
-    #         data = match.group(groups_map["data"])
-    #         nota = match.group(groups_map["nota"])
-    #         fornecedor = match.group(groups_map["fornecedor"]).strip()
-    #         valor_str = match.group(groups_map["valor"])
-
-    #         # Limpa e normaliza o nome do fornecedor
-    #         fornecedor = re.sub(r"\s+", " ", fornecedor).strip()
-
-    #         # Remove caracteres especiais do final do nome do fornecedor
-    #         fornecedor = re.sub(r"[\d\s]+$", "", fornecedor).strip()
-
-    #         # Converte valor para float
-    #         valor = self._parse_currency(valor_str)
-
-    #         if not all([data, nota, fornecedor, valor]):
-    #             return None
-
-    #         # Normaliza a data
-    #         data_normalizada = self._normalize_date(data)
-
-    #         return {
-    #             "codigo": codigo,
-    #             "data": data_normalizada,
-    #             "nota_fiscal": nota,
-    #             "fornecedor": fornecedor,
-    #             "valor": valor,
-    #             "linha_original": line.strip(),
-    #             "pagina": page_num,
-    #             "linha": line_idx,
-    #             "metodo_extracao": "regex_v2",
-    #         }
-
-    #     except (IndexError, ValueError, AttributeError) as e:
-    #         self.logger.debug(f"Erro ao construir entrada do regex: {e}")
+    #     # Identifica qual padrão foi usado pelo número de grupos
+    #     if len(groups) >= 6:  # Padrão completo
+    #         codigo, data, nota, fornecedor, valor_contabil, valor = groups
+    #     elif len(groups) == 4:  # Sem código
+    #         data, nota, fornecedor, valor_contabil = groups
+    #         codigo = "N/A"
+    #         valor = valor_contabil
+    #     elif len(groups) == 3:  # Minimalista
+    #         fornecedor, data, valor_contabil = groups
+    #         codigo = "N/A"
+    #         nota = "N/A"
+    #         valor = valor_contabil
+    #     else:
     #         return None
+
+    #     return {
+    #         "codigoFornecedor": str(codigo).strip(),
+    #         "fornecedor": fornecedor.strip(),
+    #         "data": clean_date(data),
+    #         "notaSerie": str(nota).strip(),
+    #         "valorContabil": clean_monetary_value(valor_contabil),
+    #         "valor": clean_monetary_value(valor),
+    #         "posicao": f"Pág {page_num}, Linha {line_num}",
+    #     }
+
+    def _build_entry_from_regex(
+        self, match, groups_map: dict, line: str, line_idx: int, page_num: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Constrói entrada a partir do match do regex usando mapeamento de grupos
+
+        Args:
+            match: Objeto match do regex
+            groups_map: Dicionário mapeando campos para números dos grupos
+                       Ex: {'codigo': 1, 'data': 2, 'nota': 3, 'fornecedor': 4, 'valor': 5}
+            line: Linha original do texto
+            line_idx: Índice da linha no documento
+            page_num: Número da página
+        """
+
+        try:
+
+            codigo = (
+                match.group(groups_map.get("codigo", 1))
+                if "codigo" in groups_map
+                else None
+            )
+            data = match.group(groups_map["data"])
+            nota = match.group(groups_map["nota"])
+            fornecedor = match.group(groups_map["fornecedor"]).strip()
+            valor_str = match.group(groups_map["valor"])
+
+            # Limpa e normaliza o nome do fornecedor
+            fornecedor = re.sub(r"\s+", " ", fornecedor).strip()
+
+            # Remove caracteres especiais do final do nome do fornecedor
+            fornecedor = re.sub(r"[\d\s]+$", "", fornecedor).strip()
+
+            # Converte valor para float
+            valor = self._parse_currency(valor_str)
+
+            if not all([data, nota, fornecedor, valor]):
+                return None
+
+            # Normaliza a data
+            data_normalizada = self._normalize_date(data)
+
+            return {
+                "codigo": codigo,
+                "data": data_normalizada,
+                "nota_fiscal": nota,
+                "fornecedor": fornecedor,
+                "valor": valor,
+                "linha_original": line.strip(),
+                "pagina": page_num,
+                "linha": line_idx,
+                "metodo_extracao": "regex_v2",
+            }
+
+        except (IndexError, ValueError, AttributeError) as e:
+            self.logger.debug(f"Erro ao construir entrada do regex: {e}")
+            return None
 
     def _is_valid_entry(self, entry: Dict[str, Any]) -> bool:
         """Valida se a entrada é válida"""
