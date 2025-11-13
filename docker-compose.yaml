@@ -13,7 +13,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     networks:
-      - app-network
+      - teste
 
   backend:
     build:
@@ -31,7 +31,7 @@ services:
       - PORT=4000
       - PYTHON_SERVICE_URL=http://python-service:5000
     networks:
-      - app-network
+      - teste
     depends_on:
       - python-service
 
@@ -47,7 +47,7 @@ services:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://nginx/api       # ✅ usa caminho relativo
     networks:
-      - app-network
+      - teste
     depends_on:
       - backend
 
@@ -64,8 +64,8 @@ services:
       - backend
       - python-service
     networks:
-      - app-network
+      - teste
 
 networks:
-  app-network:
+  teste:
     driver: bridge
