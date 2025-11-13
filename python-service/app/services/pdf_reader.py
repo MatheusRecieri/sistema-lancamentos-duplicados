@@ -8,32 +8,41 @@ from app.utils.normalizer import (
     clean_date,
     clean_supplier_name,
 )
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
 class PDFReader:
     """
-    Leitor de PDF robusto para mútiplas estrategias de extração
+    Leitor de PDF robusto e genérico — funciona com múltiplos formatos de notas.
+    Detecta automaticamente o layout e tenta diferentes estratégias de regex.
     """
 
-    def __init__(self):
-        self.extraction_strategies = [
-            # self._extract_with_layout,
-            # self._extract_with_table,
-            self._extract_with_regex,
-            # self.extract_from_pdf,
-            # self._parse_structured_line
+    def _init_(self):
+        self.regex_patterns = [
+            # 1️⃣ Formato completo (mais comum)
+            re.compile(
+                r"^\d{3,6}\s+\d{2}/\d{2}/\d{4}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+\d+\s+\d+\s*-\s*([A-Z0-9\s\.\-]+?)\s+\d-\d+[A-Z]{2}\s+([\d.,]+)",
+                re.MULTILINE,
+            ),
+            # 2️⃣ Data - Nota - Fornecedor - Valor
+            re.compile(
+                r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+([A-ZÀ-Ú0-9\s\.\-]{3,})\s+([\d.,]+)",
+                re.MULTILINE,
+            ),
+            # 3️⃣ Fornecedor - Data - Valor
+            re.compile(
+                r"([A-ZÀ-Ú][A-ZÀ-Úa-z0-9\s\.\-]{5,})\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+                re.MULTILINE,
+            ),
+            # 4️⃣ Código - Data - Nota - Valor
+            re.compile(
+                r"^\d{3,6}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+([A-ZÀ-Ú\s\.\-]{3,})\s+([\d.,]+)",
+                re.MULTILINE,
+            ),
         ]
 
     def extract_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
         """
-        Extrai dados estruturados do PDF usando múltiplas estratégias
-
-        Args:
-            pdf_path: Caminho do arquivo PDF
-
-        Returns:
-            Lista de dicionários com dados extraídos
+        Extrai dados estruturados de qualquer PDF.
         """
         print(f"🔍 Iniciando extração do PDF: {pdf_path}")
 
@@ -83,8 +92,7 @@ class PDFReader:
 
     def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
         """
-        Estratégia 3: Extração via regex
-        Fallback para PDFs sem estrutura clara
+        Estratégia: tentar vários regex até encontrar correspondências.
         """
         text = page.extract_text()
         if not text:
@@ -93,98 +101,82 @@ class PDFReader:
         entries = []
         lines = text.split("\n")
 
-        # Padrões de extração
-        # patterns = [
-        #     # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
-        #     # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-        #     # r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d-\d{3}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-        #     r"^\d{3,6}\s+\d{2}/\d{2}/\d{4}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+\d+\s+\d+\s*-\s*([A-Z0-9\s\.\-]+?)\s+\d-\d+[A-Z]{2}\s+([\d.,]+)",
-        #     # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-        #     r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)\s+([\d.,])",
-        #     # Padrão minimalista: FORNECEDOR DATA VALOR
-        #     r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
-        # ]
-
-        patterns = [
-            # Padrão Principal: Captura exata conforme especificação
-            {
-                "pattern": r"(\d{1,4})\s+(\d{2}/\d{2}/\d{4})\s+(\d{1,15})\s+\d{1,3}\s+\d{1,3}\s+([A-Z0-9][\w\s\-\.]+?)\s+\d-\d{3,4}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 4,
-                    "valor": 5,
-                },
-            },
-            # Padrão Alternativo: Data com ano curto (DD/MM/AA)
-            {
-                "pattern": r"(\d{1,4})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d{1,15})\s+\d{1,3}\s+\d{1,3}\s+([A-Z0-9][\w\s\-\.]+?)\s+\d-\d{3,4}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 4,
-                    "valor": 5,
-                },
-            },
-            # Padrão Flexível: Para variações no formato
-            {
-                "pattern": r"(\d{1,4})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d{1,15})\s+\d+\s+\d+\s+([A-Z0-9][\w\s\-\.&]+?)\s+\d+-?\d{3,4}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 4,
-                    "valor": 5,
-                },
-            },
-        ]
-
         for idx, line in enumerate(lines):
             if self._is_non_data_line(line):
                 continue
 
-            for pattern_dict in patterns:
-                match = re.search(pattern_dict["pattern"], line)
-                print("log do match", match)
-
+            for pattern in self.regex_patterns:
+                match = re.search(pattern, line)
                 if match:
-                    entry = self._build_entry_from_regex(
-                        match, pattern_dict, line, idx, page_num
-                    )
+                    entry = self._build_entry_from_match(match, pattern, idx, page_num)
                     if entry and self._is_valid_entry(entry):
                         entries.append(entry)
-                        break
+                        break  # encontrou, não precisa testar outros padrões
 
         return entries
 
-    def _find_header_line(self, lines: List[str]) -> int:
-        """Encontra a linha do cabeçalho"""
-        header_patterns = [
-            r"código.*fornecedor.*data.*nota.*valor",
-            r"supplier.*date.*invoice.*amount",
-            r"cod.*forn.*dt.*vl",
-        ]
+    def _build_entry_from_match(
+        self, match, pattern, line_num: int, page_num: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Cria o dicionário padronizado com base nos grupos encontrados.
+        """
+        groups = match.groups()
+        entry = {
+            "codigoFornecedor": "N/A",
+            "fornecedor": "",
+            "data": "",
+            "notaSerie": "N/A",
+            "valorContabil": "0,00",
+            "valor": "0,00",
+            "posicao": f"Pág {page_num}, Linha {line_num}",
+        }
 
-        for idx, line in enumerate(lines[:15]):  # Procura nas primeiras 15 linhas
-            line_lower = line.lower()
-            for pattern in header_patterns:
-                if re.search(pattern, line_lower, re.IGNORECASE):
-                    return idx
+        try:
+            # Adapta dinamicamente ao número de grupos
+            if len(groups) == 4:
+                # Padrão: data, nota, fornecedor, valor
+                data, nota, fornecedor, valor = groups
+                entry.update({
+                    "fornecedor": clean_supplier_name(fornecedor.strip()),
+                    "data": clean_date(data),
+                    "notaSerie": nota.strip(),
+                    "valorContabil": clean_monetary_value(valor),
+                    "valor": clean_monetary_value(valor),
+                })
+            elif len(groups) == 3:
+                # Padrão: fornecedor, data, valor
+                fornecedor, data, valor = groups
+                entry.update({
+                    "fornecedor": clean_supplier_name(fornecedor.strip()),
+                    "data": clean_date(data),
+                    "valorContabil": clean_monetary_value(valor),
+                    "valor": clean_monetary_value(valor),
+                })
+            else:
+                # fallback genérico
+                fornecedor = groups[-2] if len(groups) > 2 else ""
+                valor = groups[-1]
+                entry.update({
+                    "fornecedor": clean_supplier_name(fornecedor.strip()),
+                    "valorContabil": clean_monetary_value(valor),
+                    "valor": clean_monetary_value(valor),
+                })
+        except Exception:
+            return None
 
-        return -1
+        return entry
 
     def _is_non_data_line(self, line: str) -> bool:
-        """Identifica linhas que não são dados"""
+        """Ignora linhas que não contêm dados."""
         non_data_patterns = [
             r"^total",
             r"^subtotal",
             r"^página",
             r"^emissão",
             r"sistema licenciado",
-            r"^cnpj:",
-            r"^insc\s+est:",
+            r"^cnpj",
+            r"^insc\s+est",
             r"acompanhamento\s+de",
             r"^\s*$",  # Linha vazia
         ]
@@ -309,22 +301,11 @@ class PDFReader:
         }
 
     def _is_valid_entry(self, entry: Dict[str, Any]) -> bool:
-        """Valida se a entrada é válida"""
+        """Valida se o registro é plausível."""
         if not entry:
             return False
-
-        # Validações essenciais
-        if not entry.get("fornecedor") or entry["fornecedor"] == "Desconhecido":
+        if not entry.get("fornecedor") or len(entry["fornecedor"]) < 3:
             return False
-
-        if not entry.get("data") or entry["data"] == "":
+        if not entry.get("valorContabil") or entry["valorContabil"] in ["0", "0,00"]:
             return False
-
-        if entry.get("valorContabil", "0,00") == "0,00":
-            return False
-
-        # Valida se fornecedor tem comprimento razoável
-        if len(entry["fornecedor"]) < 3:
-            return False
-
         return True
