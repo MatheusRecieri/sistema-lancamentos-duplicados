@@ -47,6 +47,8 @@ class PDFReader:
 
                 all_entries.extend(entries)
             print(f"🎯 Total extraído: {len(all_entries)} registros")
+
+            self._extract_with_regex(page, page_num)
             return all_entries
 
     # bom para planilhas
