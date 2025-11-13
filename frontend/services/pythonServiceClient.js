@@ -54,12 +54,12 @@ class PythonServiceClient {
 
     } catch (error) {
       console.error('❌ Erro na análise Python:', error.message);
-      
+
       if (error.response) {
         console.error('Detalhes:', error.response.data);
         throw new Error(error.response.data.detail || 'Erro no serviço Python');
       }
-      
+
       throw error;
     }
   }
@@ -74,7 +74,7 @@ class PythonServiceClient {
       const formData = new FormData();
       formData.append('file', fs.createReadStream(filePath));
 
-      const response = await this.client.post('/analyze/debug', formData, {
+      const response = await this.client.post('/api/debug/extract-text', formData, {
         headers: formData.getHeaders(),
       });
 
