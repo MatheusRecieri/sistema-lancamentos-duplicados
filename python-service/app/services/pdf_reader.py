@@ -77,7 +77,7 @@ class PDFReader:
 
         return entries
 
-    def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
+     def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
         """
         Estratégia 3: Extração via regex
         Fallback para PDFs sem estrutura clara
@@ -93,20 +93,11 @@ class PDFReader:
         patterns = [
             # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
             # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
-            # r"(\d{3,4})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+\s+(.+?)\s+\s+([\d.,]+)",
+            r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)",
             # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-            {
-                "pattern": r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d-\d{3}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
-                "groups": {
-                    "codigo": 1,
-                    "data": 2,
-                    "nota": 3,
-                    "fornecedor": 4,
-                    "valor": 5,
-                },
-            }
+            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
             # Padrão minimalista: FORNECEDOR DATA VALOR
-            # r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
+            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
         ]
 
         for idx, line in enumerate(lines):
