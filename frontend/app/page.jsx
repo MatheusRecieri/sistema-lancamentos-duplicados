@@ -37,7 +37,7 @@ function Home() {
 
   // console.log(uploadedFiles, setUploadedFiles, setAnalysis);
   useEffect(() => {
-    console.log('Novo estado de analysis:', analysis);
+    //console.log('Novo estado de analysis:', analysis);
   }, [analysis]);
   /**
    * JSX - JavaScript XML

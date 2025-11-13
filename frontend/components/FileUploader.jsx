@@ -19,7 +19,7 @@ function FileUploader({ onUpload }) {
   const handleFileChange = async event => {
     const files = Array.from(event.target.files);
     if (files.length > 0) {
-      console.log('Enviando para App');
+      //console.log('Enviando para App');
       processFiles(files);
     }
   };
@@ -38,10 +38,10 @@ function FileUploader({ onUpload }) {
     setUploading(true);
     try {
       const file = files[0];
-      console.log('Enviando arquivo para análise', file.name);
+      //console.log('Enviando arquivo para análise', file.name);
 
       const response = await fileService.uploadFile(file);
-      console.log('Resposta do backend:', response);
+     // console.log('Resposta do backend:', response);
 
       onUpload(files, response);
     } catch (error) {
