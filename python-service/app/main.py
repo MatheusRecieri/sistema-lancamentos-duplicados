@@ -127,6 +127,35 @@ async def analyze_pf(file: UploadFile = File(...)):
                 print(f"⚠️ Erro ao remover arquivo temporário: {e}")
 
 
+@app.post("/api/debug/extract-text")
+async def debug_extract_text(file: UploadFile):
+    """Debug: extrai texto bruto do PDF"""
+    import pdfplumber
+
+    content = await file.read()
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        text_pages = []
+        with pdfplumber.open(tmp_path) as pdf:
+            for page_num, page in enumerate(pdf.pages, 1):
+                text = page.extract_text()
+                text_pages.append(
+                    {
+                        "page": page_num,
+                        "text": text,
+                        "lines": text.split("\n") if text else [],
+                    }
+                )
+
+        return {"success": True, "pages": text_pages}
+    finally:
+        os.unlink(tmp_path)
+
+
 @app.post("/analyze/debug")
 async def analyze_pdf_debug(file: UploadFile = File(...)):
     """
