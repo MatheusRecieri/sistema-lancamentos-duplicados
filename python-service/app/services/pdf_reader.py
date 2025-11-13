@@ -108,6 +108,7 @@ class PDFReader:
 
             for pattern in patterns:
                 match = re.search(pattern, line)
+                print("log do match", match)
 
                 if match:
                     entry = self._build_entry_from_regex(
