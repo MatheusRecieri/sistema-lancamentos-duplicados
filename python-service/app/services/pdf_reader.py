@@ -97,7 +97,7 @@ class PDFReader:
             # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
             r"(\d{3,6})\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+\d+\s+\d+\s+([A-Z][\w\s&\-\.]+?)\s+\d-\d{3}\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
             # Padrão sem código: DATA NOTA FORNECEDOR VALOR
-            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
+            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)\s+([\d.,])",
             # Padrão minimalista: FORNECEDOR DATA VALOR
             r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
         ]
