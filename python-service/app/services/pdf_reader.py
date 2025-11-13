@@ -77,7 +77,7 @@ class PDFReader:
 
         return entries
 
-      def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
+    def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
         """
         Estratégia 3: Extração via regex
         Fallback para PDFs sem estrutura clara
@@ -116,7 +116,6 @@ class PDFReader:
                         break
 
         return entries
-
 
     # def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
     #     """
