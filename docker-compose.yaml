@@ -3,7 +3,7 @@ services:
     build:
       context: ./python-service
       dockerfile: Dockerfile
-    container_name: invoice-python
+    container_name: teste-python
     restart: unless-stopped
     expose:
       - "5000"
@@ -19,7 +19,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: invoice-backend
+    container_name: teste-backend
     restart: unless-stopped
     expose:
       - "4000"
@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: invoice-frontend
+    container_name: teste-frontend
     restart: unless-stopped
     expose:
       - "3000"
@@ -53,7 +53,7 @@ services:
 
   nginx:
     image: nginx:latest
-    container_name: invoice-nginx
+    container_name: teste-nginx
     restart: unless-stopped
     ports:
       - "80:80"
