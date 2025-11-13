@@ -1,311 +1,55 @@
 import re
-from typing import List, Dict, Any, Optional
-import pdfplumber
-from datetime import datetime
-from app.utils.normalizer import (
-    normalize_text,
-    clean_monetary_value,
-    clean_date,
-    clean_supplier_name,
-)
+from patterns import patterns
+from layout_parser import extract_with_layout
 
 
 class PDFReader:
-    """
-    Leitor de PDF robusto e genérico — funciona com múltiplos formatos de notas.
-    Detecta automaticamente o layout e tenta diferentes estratégias de regex.
-    """
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+        self.layout_data = extract_with_layout(file_path)
+        self.full_text = " ".join(block["text"] for block in self.layout_data)
 
-    def _init_(self):
-        self.regex_patterns = [
-            # 1️⃣ Formato completo (mais comum)
-            re.compile(
-                r"^\d{3,6}\s+\d{2}/\d{2}/\d{4}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+\d+\s+\d+\s*-\s*([A-Z0-9\s\.\-]+?)\s+\d-\d+[A-Z]{2}\s+([\d.,]+)",
-                re.MULTILINE,
-            ),
-            # 2️⃣ Data - Nota - Fornecedor - Valor
-            re.compile(
-                r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+([A-ZÀ-Ú0-9\s\.\-]{3,})\s+([\d.,]+)",
-                re.MULTILINE,
-            ),
-            # 3️⃣ Fornecedor - Data - Valor
-            re.compile(
-                r"([A-ZÀ-Ú][A-ZÀ-Úa-z0-9\s\.\-]{5,})\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
-                re.MULTILINE,
-            ),
-            # 4️⃣ Código - Data - Nota - Valor
-            re.compile(
-                r"^\d{3,6}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+([A-ZÀ-Ú\s\.\-]{3,})\s+([\d.,]+)",
-                re.MULTILINE,
-            ),
-        ]
-
-    def extract_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
+    def extract_field(self, field_name: str):
         """
-        Extrai dados estruturados de qualquer PDF.
+        Extrai o campo usando:
+        1️⃣ Regex direta no texto completo.
+        2️⃣ Fallback por proximidade no layout.
         """
-        print(f"🔍 Iniciando extração do PDF: {pdf_path}")
-
-        with pdfplumber.open(pdf_path) as pdf:
-            all_entries = []
-
-            for page_num, page in enumerate(pdf.pages, 1):
-                print(f"📄 Processando página {page_num}/{len(pdf.pages)}")
-
-                entries = self._extract_with_regex(page, page_num)
-
-                all_entries.extend(entries)
-            print(f"🎯 Total extraído: {len(all_entries)} registros")
-
-            self._extract_with_regex(page, page_num)
-            return all_entries
-
-    # bom para planilhas
-    def _extract_with_table(self, page, page_num) -> List[Dict[str, Any]]:
-        """
-        Estrategia 2: Extração de tabelas
-        Melhor para pdf com estrutura tabular clara
-        """
-        tables = page.extract_tables()
-        if not tables:
-            return []
-
-        entries = []
-
-        for table in tables:
-            if not tables or len(table) < 2:
-                continue
-
-            header = table[0]
-
-            col_map = self._map_columns(header)
-
-            for row_idx, row in enumerate(table[1:], 1):
-                if not row or len(row) < 3:
-                    continue
-
-                entry = self._parse_table_row(row, col_map, row_idx, page_num)
-                if entry and self._is_valid_entry(entry):
-                    entries.append(entry)
-
-        return entries
-
-    def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
-        """
-        Estratégia: tentar vários regex até encontrar correspondências.
-        """
-        text = page.extract_text()
-        if not text:
-            return []
-
-        entries = []
-        lines = text.split("\n")
-
-        for idx, line in enumerate(lines):
-            if self._is_non_data_line(line):
-                continue
-
-            for pattern in self.regex_patterns:
-                match = re.search(pattern, line)
-                if match:
-                    entry = self._build_entry_from_match(match, pattern, idx, page_num)
-                    if entry and self._is_valid_entry(entry):
-                        entries.append(entry)
-                        break  # encontrou, não precisa testar outros padrões
-
-        return entries
-
-    def _build_entry_from_match(
-        self, match, pattern, line_num: int, page_num: int
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Cria o dicionário padronizado com base nos grupos encontrados.
-        """
-        groups = match.groups()
-        entry = {
-            "codigoFornecedor": "N/A",
-            "fornecedor": "",
-            "data": "",
-            "notaSerie": "N/A",
-            "valorContabil": "0,00",
-            "valor": "0,00",
-            "posicao": f"Pág {page_num}, Linha {line_num}",
-        }
-
-        try:
-            # Adapta dinamicamente ao número de grupos
-            if len(groups) == 4:
-                # Padrão: data, nota, fornecedor, valor
-                data, nota, fornecedor, valor = groups
-                entry.update({
-                    "fornecedor": clean_supplier_name(fornecedor.strip()),
-                    "data": clean_date(data),
-                    "notaSerie": nota.strip(),
-                    "valorContabil": clean_monetary_value(valor),
-                    "valor": clean_monetary_value(valor),
-                })
-            elif len(groups) == 3:
-                # Padrão: fornecedor, data, valor
-                fornecedor, data, valor = groups
-                entry.update({
-                    "fornecedor": clean_supplier_name(fornecedor.strip()),
-                    "data": clean_date(data),
-                    "valorContabil": clean_monetary_value(valor),
-                    "valor": clean_monetary_value(valor),
-                })
-            else:
-                # fallback genérico
-                fornecedor = groups[-2] if len(groups) > 2 else ""
-                valor = groups[-1]
-                entry.update({
-                    "fornecedor": clean_supplier_name(fornecedor.strip()),
-                    "valorContabil": clean_monetary_value(valor),
-                    "valor": clean_monetary_value(valor),
-                })
-        except Exception:
+        pattern = patterns.get(field_name)
+        if not pattern:
             return None
 
-        return entry
+        # 1️⃣ Tenta regex direta no texto bruto
+        match = re.search(pattern, self.full_text, re.IGNORECASE)
+        if match:
+            return match.group(0).strip()
 
-    def _is_non_data_line(self, line: str) -> bool:
-        """Ignora linhas que não contêm dados."""
-        non_data_patterns = [
-            r"^total",
-            r"^subtotal",
-            r"^página",
-            r"^emissão",
-            r"sistema licenciado",
-            r"^cnpj",
-            r"^insc\s+est",
-            r"acompanhamento\s+de",
-            r"^\s*$",  # Linha vazia
-        ]
+        # 2️⃣ Fallback — tenta por proximidade no layout
+        for i, block in enumerate(self.layout_data):
+            if field_name.lower() in block["text"].lower():
+                # tenta capturar o texto mais próximo (mesma linha ou próxima)
+                if i + 1 < len(self.layout_data):
+                    nearby_text = self.layout_data[i + 1]["text"]
+                    match = re.search(pattern, nearby_text, re.IGNORECASE)
+                    if match:
+                        return match.group(0).strip()
+        return None
 
-        line_lower = line.lower().strip()
-        return any(re.match(pattern, line_lower) for pattern in non_data_patterns)
+    def extract_all_fields(self):
+        """
+        Extrai todos os campos definidos em patterns.py.
+        """
+        results = {}
+        for field in patterns.keys():
+            results[field] = self.extract_field(field)
+        return results
 
-    def _is_tax_subline(self, line: str) -> bool:
-        """Identifica linhas de sub-impostos que não são notas"""
-        line_clean = line.strip()
 
-        # Padrões de linhas de imposto
-        tax_patterns = [
-            r"^\s*ISS\s+",
-            r"^\s*IRRF\s+",
-            r"^\s*CRF\s+",
-            r"^\s*INSS-RET\s+",
-            r"^\s*ISS RET\.\s+",
-        ]
+if __name__ == "__main__":
+    pdf_path = "exemplo.pdf"  # caminho do seu PDF
+    reader = PDFReader(pdf_path)
+    dados = reader.extract_all_fields()
 
-        return any(
-            re.match(pattern, line_clean, re.IGNORECASE) for pattern in tax_patterns
-        )
-
-    def _is_total_or_footer(self, line: str) -> bool:
-        """Identifica linhas de total e rodapé"""
-        line_lower = line.lower().strip()
-
-        footer_patterns = [
-            "total cfop",
-            "total geral",
-            "sistema licenciado",
-            "página:",
-        ]
-
-        return any(pattern in line_lower for pattern in footer_patterns)
-
-    def _map_columns(self, header: List[str]) -> Dict[str, int]:
-        """Mapeia colunas da tabela"""
-        col_map = {}
-
-        for idx, col in enumerate(header):
-            if not col:
-                continue
-
-            col_lower = col.lower()
-
-            if "código" in col_lower or "codigo" in col_lower:
-                col_map["codigo"] = idx
-            elif "fornecedor" in col_lower or "supplier" in col_lower:
-                col_map["fornecedor"] = idx
-            elif "data" in col_lower or "date" in col_lower:
-                col_map["data"] = idx
-            elif "nota" in col_lower or "invoice" in col_lower or "nf" in col_lower:
-                col_map["nota"] = idx
-            elif "contábil" in col_lower or "contabil" in col_lower:
-                col_map["valor_contabil"] = idx
-            elif "valor" in col_lower or "amount" in col_lower:
-                if "valor_contabil" not in col_map:
-                    col_map["valor"] = idx
-
-        return col_map
-
-    def _parse_table_row(
-        self, row: List[str], col_map: Dict[str, int], row_num: int, page_num: int
-    ) -> Optional[Dict[str, Any]]:
-        """Parse linha de tabela"""
-
-        def get_col(key: str, default: str = "") -> str:
-            idx = col_map.get(key, -1)
-            if idx != -1 and idx < len(row):
-                return str(row[idx] or default).strip()
-            return default
-
-        fornecedor = get_col("fornecedor", "Desconhecido")
-        data = get_col("data")
-        valor_contabil = get_col("valor_contabil", get_col("valor", "0,00"))
-
-        # Validação básica
-        if not fornecedor or not data or fornecedor == "Desconhecido":
-            return None
-
-        return {
-            "codigoFornecedor": get_col("codigo", "N/A"),
-            "fornecedor": fornecedor,
-            "data": clean_date(data),
-            "notaSerie": get_col("nota", "N/A"),
-            "valorContabil": clean_monetary_value(valor_contabil),
-            "valor": clean_monetary_value(get_col("valor", valor_contabil)),
-            "posicao": f"Pág {page_num}, Linha {row_num}",
-        }
-
-    def _build_entry_from_regex(
-        self, match, pattern: str, original_line: str, line_num: int, page_num: int
-    ) -> Optional[Dict[str, Any]]:
-        """Constrói entrada a partir de match regex"""
-        groups = match.groups()
-
-        # Identifica qual padrão foi usado pelo número de grupos
-        if len(groups) >= 6:  # Padrão completo
-            codigo, data, nota, fornecedor, valor_contabil, valor = groups
-        elif len(groups) == 4:  # Sem código
-            data, nota, fornecedor, valor_contabil = groups
-            codigo = "N/A"
-            valor = valor_contabil
-        elif len(groups) == 3:  # Minimalista
-            fornecedor, data, valor_contabil = groups
-            codigo = "N/A"
-            nota = "N/A"
-            valor = valor_contabil
-        else:
-            return None
-
-        return {
-            "codigoFornecedor": str(codigo).strip(),
-            "fornecedor": fornecedor.strip(),
-            "data": clean_date(data),
-            "notaSerie": str(nota).strip(),
-            "valorContabil": clean_monetary_value(valor_contabil),
-            "valor": clean_monetary_value(valor),
-            "posicao": f"Pág {page_num}, Linha {line_num}",
-        }
-
-    def _is_valid_entry(self, entry: Dict[str, Any]) -> bool:
-        """Valida se o registro é plausível."""
-        if not entry:
-            return False
-        if not entry.get("fornecedor") or len(entry["fornecedor"]) < 3:
-            return False
-        if not entry.get("valorContabil") or entry["valorContabil"] in ["0", "0,00"]:
-            return False
-        return True
+    print("\n=== RESULTADO EXTRAÍDO ===")
+    for campo, valor in dados.items():
+        print(f"{campo.capitalize()}: {valor}")

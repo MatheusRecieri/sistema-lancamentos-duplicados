@@ -1,26 +1,27 @@
-# Servidor
-gunicorn
-uvicorn[standard]
+# --- Servidor ---
 fastapi
+uvicorn[standard]
+gunicorn
 python-multipart
 
-# PDF Processing
+# --- Processamento de PDF / OCR ---
 pdfplumber
 pypdf
-pytesseract
-pdf2image
-pillow
-poppler-utils
+pymupdf               # (fitz) - leitura de layout e coordenadas
+pytesseract           # OCR para PDFs escaneados
+pdf2image             # converte PDF para imagem (usado com pytesseract)
+pillow                # suporte a imagens (requisito do pytesseract/pdf2image)
+poppler-utils         # dependência do pdf2image (instalado no sistema, não via pip)
 
-# Excel/Data
+# --- Processamento e análise de dados ---
 pandas
 openpyxl
 xlrd
 xlsxwriter
 
-# Análise de texto
+# --- Análise de texto e similaridade ---
 rapidfuzz
 python-Levenshtein
 
-# Utilitários
+# --- Utilitários e Configuração ---
 python-dotenv
