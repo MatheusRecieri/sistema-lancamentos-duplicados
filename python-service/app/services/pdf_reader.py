@@ -19,9 +19,10 @@ class PDFReader:
     def __init__(self):
         self.extraction_strategies = [
             # self._extract_with_layout,
-            self._extract_with_table,
-            self._extract_with_regex,
-            self.extract_from_pdf,
+            # self._extract_with_table,
+            # self._extract_with_regex,
+            # self.extract_from_pdf,
+            self._parse_structured_line
         ]
 
     def extract_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
