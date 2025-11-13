@@ -43,9 +43,7 @@ services:
     restart: unless-stopped
     expose:
       - "3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://nginx/api       # ✅ usa caminho relativo
+        # ✅ usa caminho relativo
     networks:
       - app-network
     depends_on:
