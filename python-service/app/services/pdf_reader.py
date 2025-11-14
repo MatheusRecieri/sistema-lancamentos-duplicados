@@ -380,6 +380,10 @@ class PDFReader:
     def _build_entry_from_mapped(
         self, mapped: Dict[str, str], page_num: int, line_index: int
     ) -> Optional[Dict[str, Any]]:
+
+        if self._is_header_line(mapped):
+            return None
+
         codigo = mapped.get("codigo") or "N/A"
         fornecedor = mapped.get("fornecedor") or ""
         nota = mapped.get("nota") or "N/A"
@@ -506,3 +510,59 @@ class PDFReader:
         except Exception as e:
             logger.exception(f"OCR falhou para {pdf_path} page {page_number}: {e}")
             return ""
+
+        # ---------------------------------------------------------
+
+    # Detectar se a linha é cabeçalho — IGNORAR
+    # ---------------------------------------------------------
+    def _is_header_line(self, mapped: Dict[str, str]) -> bool:
+        """
+        Retorna True se a linha parecer um cabeçalho e não um item real.
+        """
+
+        text_joined = " ".join(mapped.values()).lower()
+
+        # Palavras típicas de cabeçalho
+        header_keywords = [
+            "documento",
+            "doc",
+            "fornecedor",
+            "descrição",
+            "descricao",
+            "valor",
+            "contábil",
+            "contabil",
+            "nota",
+            "serie",
+            "série",
+            "código",
+            "codigo",
+            "data",
+            "entrada",
+            "cfop",
+            "controle",
+            "loja",
+            "cnpj",
+        ]
+
+        # Regra 1 — contém palavras de cabeçalho
+        if any(k in text_joined for k in header_keywords):
+            return True
+
+        # Regra 2 — não tem números relevantes
+        digits = sum(c.isdigit() for c in text_joined)
+        if digits < 3:  # nenhum código, nota ou valor
+            return True
+
+        # Regra 3 — não tem valor monetário
+        if not self.MONETARY_REGEX.search(text_joined):
+            return True
+
+        # Regra 4 — não tem fornecedor e nota ao mesmo tempo
+        fornecedor = mapped.get("fornecedor", "")
+        nota = mapped.get("nota", "")
+        if len(fornecedor) < 3 and len(nota) < 3:
+            return True
+
+        # Se passou em tudo → não é cabeçalho
+        return False
