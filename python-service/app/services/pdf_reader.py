@@ -50,6 +50,7 @@ class PDFReader:
             all_entries.extend(entries)
 
         logger.info(f"🎯 Extração concluída. Total: {len(all_entries)} registros")
+        print(all_entries)
         return all_entries
 
     # ------------------------------
