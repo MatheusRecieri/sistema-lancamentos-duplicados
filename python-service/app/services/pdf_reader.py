@@ -8,31 +8,24 @@ from app.utils.normalizer import (
     clean_date,
     clean_supplier_name,
 )
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 
 class PDFReader:
     """
-    Leitor de PDF robusto para formato ACOMPANHAMENTO DE ENTRADAS
+    Leitor de PDF robusto para mútiplas estrategias de extração
     """
 
     def __init__(self):
-        """Inicializa configurações"""
-        self.tax_keywords = [
-            "ISS",
-            "IRRF",
-            "CRF",
-            "INSS-RET",
-            "ISS RET",
-            "SUBTRI",
-            "ICMS",
-            "Total Fornecedor",
-            "Total Geral",
-            "Total CFOP",
+        self.extraction_strategies = [
+            # self._extract_with_layout,
+            self._extract_with_table,
+            self._extract_with_regex,
         ]
 
     def extract_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
         """
-        Extrai dados estruturados do PDF
+        Extrai dados estruturados do PDF usando múltiplas estratégias
 
         Args:
             pdf_path: Caminho do arquivo PDF
@@ -48,214 +41,328 @@ class PDFReader:
             for page_num, page in enumerate(pdf.pages, 1):
                 print(f"📄 Processando página {page_num}/{len(pdf.pages)}")
 
-                entries = self._extract_from_text(page, page_num)
-                all_entries.extend(entries)
+                entries = self._extract_with_regex(page, page_num)
 
+                all_entries.extend(entries)
             print(f"🎯 Total extraído: {len(all_entries)} registros")
             return all_entries
 
-    def _extract_from_text(self, page, page_num: int) -> List[Dict[str, Any]]:
+    # bom para planilhas
+    def _extract_with_table(self, page, page_num) -> List[Dict[str, Any]]:
         """
-        Extração de texto com parse inteligente
+        Estrategia 2: Extração de tabelas
+        Melhor para pdf com estrutura tabular clara
+        """
+        tables = page.extract_tables()
+        if not tables:
+            return []
+
+        entries = []
+
+        for table in tables:
+            if not tables or len(table) < 2:
+                continue
+
+            header = table[0]
+
+            col_map = self._map_columns(header)
+
+            for row_idx, row in enumerate(table[1:], 1):
+                if not row or len(row) < 3:
+                    continue
+
+                entry = self._parse_table_row(row, col_map, row_idx, page_num)
+                if entry and self._is_valid_entry(entry):
+                    entries.append(entry)
+
+        return entries
+
+    def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
+        """
+        Estratégia 3: Extração via regex
+        Fallback para PDFs sem estrutura clara
         """
         text = page.extract_text()
         if not text:
-            print("⚠️ Nenhum texto extraído")
             return []
 
         entries = []
         lines = text.split("\n")
 
-        print(f"📝 Total de linhas: {len(lines)}")
-
-        for idx, line in enumerate(lines):
-            # Debug primeiras linhas
-            if idx < 20:
-                print(f"🔍 Linha {idx}: {line[:100]}")
-
-            # Tenta extrair dados da linha
-            entry = self._parse_line(line, idx, page_num)
-
-            if entry and self._is_valid_entry(entry):
-                print(
-                    f"✅ Entry válida: {entry['fornecedor']} - R$ {entry['valorContabil']}"
-                )
-                entries.append(entry)
-
-        print(f"📊 Extraídos {len(entries)} registros da página {page_num}")
-        return entries
-
-    def _parse_line(
-        self, line: str, line_num: int, page_num: int
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Parse de uma linha de texto
-
-        Formato esperado:
-        Código Data Nota ... Fornecedor ... Valor
-        """
-        # Ignora linhas vazias e muito curtas
-        if not line or len(line.strip()) < 20:
-            return None
-
-        # Ignora cabeçalhos
-        if self._is_header_line(line):
-            return None
-
-        # Ignora linhas de imposto/total
-        if self._is_tax_or_total_line(line):
-            print(f"⚠️ Linha de imposto/total ignorada: {line[:80]}")
-            return None
-
-        # Tenta extrair com regex
-        # Padrão: Código (3-5 dígitos) + Data (DD/MM/YYYY) + Números + Texto(Fornecedor) + Valor
+        # Padrões de extração
         patterns = [
-            # Padrão 1: Código no início, data, nota longa, fornecedor, valor no final
-            r"^(\d{3,5})\s*(\d{2}/\d{2}/\d{4})\s+(\d{6,})\s+.*?([A-ZÀ-Ú][A-ZÀ-Úa-z0-9\s\.\-&\'/]{8,}?)\s+([\d.,]+)\s*(?:ISS|ICMS|IRRF|CRF|$)",
-            # Padrão 2: Mais flexível
-            r"(\d{4,5})\s*(\d{2}/\d{2}/\d{4})\s+\d+.*?([A-ZÀ-Ú][A-ZÀ-Úa-z\s\-\.&]{10,})\s+([\d.,]{4,})",
-            # Padrão 3: Captura fornecedor entre números
-            r"(\d{4,5})\s+(\d{2}/\d{2}/\d{4})\s+\d+\s+\d+\s+\d+\s+\d+\s+([A-Z][A-Za-z\s\-\.&]{8,}?)\s+\d-\d+\s+\d+\s+[A-Z]{2}\s+([\d.,]+)",
+            # Padrão completo: CÓDIGO DATA NOTA FORNECEDOR VALOR_CONTABIL VALOR
+            # |Código|| Espaços||        Data       ||espaços||nf |         |forn|   |valorcot| |valor|
+            r"(\d{3,6})\s+\s+(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)",
+            # Padrão sem código: DATA NOTA FORNECEDOR VALOR
+            r"(\d{2}/\d{2}/\d{2,4})\s+(\d+)\s+(.{10,}?)\s+([\d.,]+)",
+            # Padrão minimalista: FORNECEDOR DATA VALOR
+            r"([A-Z][A-Za-z\s]{5,50}?)\s+(\d{2}/\d{2}/\d{2,4})\s+([\d.,]+)",
         ]
 
-        for pattern_idx, pattern in enumerate(patterns):
-            match = re.search(pattern, line)
+        for idx, line in enumerate(lines):
+            if self._is_non_data_line(line):
+                continue
 
-            if match:
-                groups = match.groups()
+            for pattern in patterns:
+                match = re.search(pattern, line)
 
-                # Debug
-                if pattern_idx == 0:
-                    print(f"🎯 MATCH (Padrão {pattern_idx + 1}): {groups}")
+                if match:
+                    entry = self._build_entry_from_regex(
+                        match, pattern, line, idx, page_num
+                    )
+                    if entry and self._is_valid_entry(entry):
+                        entries.append(entry)
+                        break
 
-                # Extrai campos
-                if len(groups) >= 4:
-                    codigo = groups[0]
-                    data = groups[1]
-                    fornecedor = groups[-2]  # Penúltimo grupo
-                    valor = groups[-1]  # Último grupo
-                    nota = groups[2] if len(groups) > 4 else "N/A"
+        return entries
 
-                    # Limpa fornecedor
-                    fornecedor = self._clean_supplier(fornecedor)
-
-                    # Valida se parece um fornecedor válido
-                    if len(fornecedor) < 5:
-                        continue
-
-                    # Cria entry
-                    entry = {
-                        "codigoFornecedor": codigo.strip(),
-                        "fornecedor": clean_supplier_name(fornecedor),
-                        "data": clean_date(data),
-                        "notaSerie": nota if nota != "N/A" else "N/A",
-                        "valorContabil": clean_monetary_value(valor),
-                        "valor": clean_monetary_value(valor),
-                        "posicao": f"Pág {page_num}, Linha {line_num}",
-                    }
-
-                    return entry
-
-        return None
-
-    def _clean_supplier(self, text: str) -> str:
-        """Limpa nome do fornecedor"""
-        # Remove números no final
-        text = re.sub(r"\s+\d+\s*$", "", text)
-
-        # Remove CFOP (formato X-XXX)
-        text = re.sub(r"\s+\d-\d{3,4}.*$", "", text)
-
-        # Remove CPF/CNPJ
-        text = re.sub(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}", "", text)
-        text = re.sub(r"\d{3}\.\d{3}\.\d{3}-\d{2}", "", text)
-        text = re.sub(r"\s+\d{8,}", "", text)
-
-        # Remove UF no final (ex: MG, SP)
-        text = re.sub(r"\s+[A-Z]{2}\s*$", "", text)
-
-        # Remove espaços múltiplos
-        text = re.sub(r"\s+", " ", text)
-
-        return text.strip()
-
-    def _is_header_line(self, line: str) -> bool:
-        """Identifica cabeçalhos"""
+    def _find_header_line(self, lines: List[str]) -> int:
+        """Encontra a linha do cabeçalho"""
         header_patterns = [
-            r"código.*data.*nota",
-            r"acompanhamento\s+de\s+entradas",
+            r"código.*fornecedor.*data.*nota.*valor",
+            r"supplier.*date.*invoice.*amount",
+            r"cod.*forn.*dt.*vl",
+        ]
+
+        for idx, line in enumerate(lines[:15]):  # Procura nas primeiras 15 linhas
+            line_lower = line.lower()
+            for pattern in header_patterns:
+                if re.search(pattern, line_lower, re.IGNORECASE):
+                    return idx
+
+        return -1
+
+    def _is_non_data_line(self, line: str) -> bool:
+        """Identifica linhas que não são dados"""
+        non_data_patterns = [
+            r"^total",
+            r"^subtotal",
+            r"^página",
+            r"^emissão",
+            r"sistema licenciado",
             r"^cnpj:",
             r"^insc\s+est:",
-            r"^período:",
-            r"^emissão:",
-            r"^hora:",
-            r"^página:",
+            r"acompanhamento\s+de",
+            r"^\s*$",  # Linha vazia
         ]
 
         line_lower = line.lower().strip()
-        return any(re.search(pattern, line_lower) for pattern in header_patterns)
+        return any(re.match(pattern, line_lower) for pattern in non_data_patterns)
 
-    def _is_tax_or_total_line(self, line: str) -> bool:
-        """Identifica linhas de imposto ou totais"""
-        line_stripped = line.strip()
+    def _is_tax_subline(self, line: str) -> bool:
+        """Identifica linhas de sub-impostos que não são notas"""
+        line_clean = line.strip()
 
-        # Se começa com termo de imposto
-        for keyword in self.tax_keywords:
-            if line_stripped.startswith(keyword):
-                return True
+        # Padrões de linhas de imposto
+        tax_patterns = [
+            r"^\s*ISS\s+",
+            r"^\s*IRRF\s+",
+            r"^\s*CRF\s+",
+            r"^\s*INSS-RET\s+",
+            r"^\s*ISS RET\.\s+",
+        ]
 
-        # Se tem apenas 1-2 dígitos no início seguido de termo de imposto
-        if re.match(r"^\d{1,2}\s+(ISS|IRRF|CRF|INSS|ICMS|SUBTRI)", line_stripped):
-            return True
+        return any(
+            re.match(pattern, line_clean, re.IGNORECASE) for pattern in tax_patterns
+        )
 
-        # Linhas com "Total"
-        if "total" in line_stripped.lower():
-            return True
+    def _is_total_or_footer(self, line: str) -> bool:
+        """Identifica linhas de total e rodapé"""
+        line_lower = line.lower().strip()
 
-        # Linha vazia ou do sistema
-        if "sistema licenciado" in line_stripped.lower():
-            return True
+        footer_patterns = [
+            "total cfop",
+            "total geral",
+            "sistema licenciado",
+            "página:",
+        ]
 
-        return False
+        return any(pattern in line_lower for pattern in footer_patterns)
+
+    def _parse_structured_line(
+        self, line: str, line_num: int, page_num: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Parse especializado para formato ACOMPANHAMENTO DE ENTRADAS
+        Formato esperado: Código | Data | Nota | Série | ... | Fornecedor | ... | Valor Contábil
+        """
+        # Remove espaços extras
+        parts = line.split()
+
+        if len(parts) < 8:
+            return None
+
+        try:
+            # Extração de campos fixos
+            codigo = parts[0]
+
+            # Procura pela data (formato DD/MM/YYYY)
+            data_idx = -1
+            for i, part in enumerate(parts):
+                if re.match(r"\d{2}/\d{2}/\d{4}", part):
+                    data_idx = i
+                    break
+
+            if data_idx == -1:
+                return None
+
+            data = parts[data_idx]
+
+            # Nota fiscal geralmente vem depois da data
+            nota = parts[data_idx + 1] if data_idx + 1 < len(parts) else "N/A"
+
+            # Procura pelo valor contábil (último valor antes dos impostos)
+            # Formato: 1.234,56 ou 234,56
+            valor_contabil = "0,00"
+            for i in range(len(parts) - 1, -1, -1):
+                if re.match(r"[\d.,]+", parts[i]) and "," in parts[i]:
+                    valor_contabil = parts[i]
+                    break
+
+            # Fornecedor está entre a série/espécie e o CFOP
+            # Geralmente após o 5º elemento até antes do valor
+            fornecedor_parts = []
+            in_fornecedor = False
+
+            for i in range(data_idx + 3, len(parts)):
+                part = parts[i]
+
+                # Para quando encontrar padrões de fim de fornecedor
+                if re.match(r"\d-\d+", part):  # CFOP (ex: 1-933)
+                    break
+
+                # Pula campos numéricos curtos (série, espécie)
+                if i <= data_idx + 5 and part.isdigit() and len(part) <= 2:
+                    continue
+
+                # Adiciona ao fornecedor
+                if not part.replace(".", "").replace(",", "").isdigit():
+                    fornecedor_parts.append(part)
+
+            fornecedor = (
+                " ".join(fornecedor_parts)
+                if fornecedor_parts
+                else "Fornecedor Desconhecido"
+            )
+
+            return {
+                "codigoFornecedor": codigo.strip(),
+                "fornecedor": clean_supplier_name(fornecedor),
+                "data": clean_date(data),
+                "notaSerie": nota.strip(),
+                "valorContabil": clean_monetary_value(valor_contabil),
+                "valor": clean_monetary_value(valor_contabil),
+                "posicao": f"Pág {page_num}, Linha {line_num}",
+            }
+
+        except Exception as e:
+            # Se falhar, não retorna nada
+            return None
+
+    def _map_columns(self, header: List[str]) -> Dict[str, int]:
+        """Mapeia colunas da tabela"""
+        col_map = {}
+
+        for idx, col in enumerate(header):
+            if not col:
+                continue
+
+            col_lower = col.lower()
+
+            if "código" in col_lower or "codigo" in col_lower:
+                col_map["codigo"] = idx
+            elif "fornecedor" in col_lower or "supplier" in col_lower:
+                col_map["fornecedor"] = idx
+            elif "data" in col_lower or "date" in col_lower:
+                col_map["data"] = idx
+            elif "nota" in col_lower or "invoice" in col_lower or "nf" in col_lower:
+                col_map["nota"] = idx
+            elif "contábil" in col_lower or "contabil" in col_lower:
+                col_map["valor_contabil"] = idx
+            elif "valor" in col_lower or "amount" in col_lower:
+                if "valor_contabil" not in col_map:
+                    col_map["valor"] = idx
+
+        return col_map
+
+    def _parse_table_row(
+        self, row: List[str], col_map: Dict[str, int], row_num: int, page_num: int
+    ) -> Optional[Dict[str, Any]]:
+        """Parse linha de tabela"""
+
+        def get_col(key: str, default: str = "") -> str:
+            idx = col_map.get(key, -1)
+            if idx != -1 and idx < len(row):
+                return str(row[idx] or default).strip()
+            return default
+
+        fornecedor = get_col("fornecedor", "Desconhecido")
+        data = get_col("data")
+        valor_contabil = get_col("valor_contabil", get_col("valor", "0,00"))
+
+        # Validação básica
+        if not fornecedor or not data or fornecedor == "Desconhecido":
+            return None
+
+        return {
+            "codigoFornecedor": get_col("codigo", "N/A"),
+            "fornecedor": fornecedor,
+            "data": clean_date(data),
+            "notaSerie": get_col("nota", "N/A"),
+            "valorContabil": clean_monetary_value(valor_contabil),
+            "valor": clean_monetary_value(get_col("valor", valor_contabil)),
+            "posicao": f"Pág {page_num}, Linha {row_num}",
+        }
+
+    def _build_entry_from_regex(
+        self, match, pattern: str, original_line: str, line_num: int, page_num: int
+    ) -> Optional[Dict[str, Any]]:
+        """Constrói entrada a partir de match regex"""
+        groups = match.groups()
+
+        # Identifica qual padrão foi usado pelo número de grupos
+        if len(groups) >= 6:  # Padrão completo
+            codigo, data, nota, fornecedor, valor_contabil, valor = groups
+        elif len(groups) == 4:  # Sem código
+            data, nota, fornecedor, valor_contabil = groups
+            codigo = "N/A"
+            valor = valor_contabil
+        elif len(groups) == 3:  # Minimalista
+            fornecedor, data, valor_contabil = groups
+            codigo = "N/A"
+            nota = "N/A"
+            valor = valor_contabil
+        else:
+            return None
+
+        return {
+            "codigoFornecedor": str(codigo).strip(),
+            "fornecedor": fornecedor.strip(),
+            "data": clean_date(data),
+            "notaSerie": str(nota).strip(),
+            "valorContabil": clean_monetary_value(valor_contabil),
+            "valor": clean_monetary_value(valor),
+            "posicao": f"Pág {page_num}, Linha {line_num}",
+        }
 
     def _is_valid_entry(self, entry: Dict[str, Any]) -> bool:
-        """Valida entrada"""
+        """Valida se a entrada é válida"""
         if not entry:
             return False
 
-        # Fornecedor
-        fornecedor = entry.get("fornecedor", "")
-        if not fornecedor or fornecedor == "Desconhecido" or len(fornecedor) < 5:
-            print(f"   ❌ Fornecedor inválido: '{fornecedor}'")
+        # Validações essenciais
+        if not entry.get("fornecedor") or entry["fornecedor"] == "Desconhecido":
             return False
 
-        # Verifica se não é termo de imposto
-        for keyword in self.tax_keywords:
-            if keyword.lower() in fornecedor.lower():
-                print(f"   ❌ Fornecedor é termo de imposto: '{fornecedor}'")
-                return False
-
-        # Valor
-        valor = entry.get("valorContabil", "0,00")
-        if valor in ["0", "0,00", "0.00", "", "Não é um valor: 0,00"]:
-            print(f"   ❌ Valor inválido: '{valor}'")
+        if not entry.get("data") or entry["data"] == "":
             return False
 
-        # Data
-        data = entry.get("data", "")
-        if not data or len(data) < 8:
-            print(f"   ❌ Data inválida: '{data}'")
+        if entry.get("valorContabil", "0,00") == "0,00":
             return False
 
-        # Código
-        codigo = entry.get("codigoFornecedor", "")
-        if not codigo or not codigo.isdigit() or len(codigo) > 5:
-            print(f"   ❌ Código inválido: '{codigo}'")
+        # Valida se fornecedor tem comprimento razoável
+        if len(entry["fornecedor"]) < 3:
             return False
 
         return True
-
-    def extract_raw_text(self, pdf_path: str) -> str:
-        """Extrai texto bruto do PDF (para debug)"""
-        with pdfplumber.open(pdf_path) as pdf:
-            return "\n".join(page.extract_text() or "" for page in pdf.pages)
