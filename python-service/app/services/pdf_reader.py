@@ -1,5 +1,5 @@
 import re
-import pdfplumber
+import pdfplumber from pdfplumber 
 from typing import List, Dict, Any
 
 
