@@ -1,4 +1,4 @@
-import mymupdf as fitz  # PyMuPDF
+import pymupdf as fitz  # PyMuPDF
 from typing import List, Dict, Any
 from app.utils.normalizer import clean_date, clean_monetary_value, clean_supplier_name
 
