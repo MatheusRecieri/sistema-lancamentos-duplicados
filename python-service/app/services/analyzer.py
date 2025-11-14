@@ -199,6 +199,8 @@ class DuplicateAnalyzer:
         # Valor deve ser exatamente igual
         similarity = fuzz.ratio(fornecedor1, fornecedor2)
 
+        print(valor1, valor2)
+
         if similarity > 85.0:
             if valor1 != valor2:
                 return False
