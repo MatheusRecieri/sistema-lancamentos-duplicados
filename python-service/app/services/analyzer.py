@@ -1,39 +1,39 @@
 from typing import List, Dict, Any, Set
 from datetime import datetime
 from rapidfuzz import fuzz
-from app.utils.normalizer import normalize_text
+import unicodedata
 
 
 class DuplicateAnalyzer:
     """
-    Detector de duplicatas com match exato e fuzzy
+    Analisa duplicidades com matching exato e fuzzy
     """
 
     def __init__(self, similarity_threshold: float = 85.0):
         self.similarity_threshold = similarity_threshold
 
-    # ----------------------------------------------------------------------
+    # ============================================================
     # API PRINCIPAL
-    # ----------------------------------------------------------------------
+    # ============================================================
     def analyze_duplicates(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         print(f"🔍 Iniciando análise de {len(data)} registros...")
 
-        valid_entries = self._filter_valid_entries(data)
-        print(f"✅ {len(valid_entries)} registros válidos")
+        valid = self._filter_valid(data)
+        print(f"✅ {len(valid)} registros válidos")
 
-        if not valid_entries:
+        if not valid:
             return self._empty_result(len(data))
 
         processados = set()
         duplicatas_exatas = []
-        possiveis_duplicatas = []
+        duplicatas_fuzzy = []
 
-        # -----------------------------
-        # 1) DUPLICATAS EXATAS
-        # -----------------------------
-        exact_groups = self._group_by_exact_match(valid_entries)
+        # --------------------------------------------------------
+        # 1) EXATAS
+        # --------------------------------------------------------
+        exact_groups = self._group_exact(valid)
 
-        for key, entries in exact_groups.items():
+        for entries in exact_groups.values():
             if len(entries) > 1:
                 duplicatas_exatas.append(
                     self._format_group(entries, "DUPLICATA_EXATA",
@@ -42,73 +42,73 @@ class DuplicateAnalyzer:
                 for e in entries:
                     processados.add(self._unique_key(e))
 
-        # -----------------------------
-        # 2) POSSÍVEIS DUPLICATAS (FUZZY)
-        # -----------------------------
-        fuzzy_groups = self._group_by_similar_match(valid_entries, processados)
+        # --------------------------------------------------------
+        # 2) FUZZY
+        # --------------------------------------------------------
+        fuzzy_groups = self._group_fuzzy(valid, processados)
 
-        for key, entries in fuzzy_groups.items():
+        for entries in fuzzy_groups.values():
             if len(entries) > 1:
-                possiveis_duplicatas.append(
+                duplicatas_fuzzy.append(
                     self._format_group(entries, "POSSIVEL_DUPLICATA",
                                        "Fornecedor semelhante e valor igual")
                 )
                 for e in entries:
                     processados.add(self._unique_key(e))
 
-        # -----------------------------
-        # 3) NOTAS ÚNICAS
-        # -----------------------------
-        notas_unicas = [
-            e for e in valid_entries if self._unique_key(e) not in processados
+        # --------------------------------------------------------
+        # 3) NÃO DUPLICADOS
+        # --------------------------------------------------------
+        unicos = [
+            e for e in valid if self._unique_key(e) not in processados
         ]
 
-        print("📊 Análise concluída!")
-        print(f"   • Duplicatas exatas: {len(duplicatas_exatas)}")
-        print(f"   • Possíveis duplicatas: {len(possiveis_duplicatas)}")
-        print(f"   • Notas únicas: {len(notas_unicas)}")
+        print("📊 Concluído!")
 
         return {
             "summary": {
                 "totalItensProcessados": len(data),
-                "itensValidos": len(valid_entries),
+                "itensValidos": len(valid),
                 "duplicatasExatas": len(duplicatas_exatas),
-                "possiveisDuplicatas": len(possiveis_duplicatas),
-                "notasUnicas": len(notas_unicas)
+                "possiveisDuplicatas": len(duplicatas_fuzzy),
+                "notasUnicas": len(unicos),
             },
             "duplicatas": duplicatas_exatas,
-            "possiveisDuplicatas": possiveis_duplicatas,
-            "notasUnicas": notas_unicas
+            "possiveisDuplicatas": duplicatas_fuzzy,
+            "notasUnicas": unicos,
         }
 
-    # ----------------------------------------------------------------------
-    # ETAPA 0 - Validação
-    # ----------------------------------------------------------------------
-    def _filter_valid_entries(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    # ============================================================
+    # VALIDAÇÃO
+    # ============================================================
+    def _filter_valid(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         valid = []
 
         for e in data:
             if not e:
                 continue
 
-            valor = e.get("valorContabil", "0,00")
-            fornecedor = e.get("fornecedor", "")
-            data_emissao = e.get("data", "")
+            fornecedor = e.get("fornecedor", "").strip()
+            data_emissao = e.get("data", "").strip()
+            valor = e.get("valorContabil", "").strip()
 
-            if (
-                fornecedor
-                and fornecedor != "Desconhecido"
-                and data_emissao
-                and valor not in ("0", "0,00", "0.00")
-            ):
-                valid.append(e)
+            if not fornecedor or fornecedor == "Desconhecido":
+                continue
+
+            if not data_emissao:
+                continue
+
+            if valor in ("0", "0.00", "0,00"):
+                continue
+
+            valid.append(e)
 
         return valid
 
-    # ----------------------------------------------------------------------
-    # ETAPA 1 - DUPLICATAS EXATAS
-    # ----------------------------------------------------------------------
-    def _group_by_exact_match(self, entries):
+    # ============================================================
+    # EXATO
+    # ============================================================
+    def _group_exact(self, entries):
         groups = {}
 
         for e in entries:
@@ -118,29 +118,26 @@ class DuplicateAnalyzer:
         return groups
 
     def _exact_key(self, e):
-        fornecedor = normalize_text(e.get("fornecedor", ""))
+        fornecedor = self._norm(e.get("fornecedor", ""))
         data = e.get("data", "")
         nota = str(e.get("notaSerie", "")).strip()
-        valor = self._normalize_valor(e.get("valorContabil", "0,00"))
+        valor = self._norm_valor(e.get("valorContabil", "0"))
 
         return f"{fornecedor}|{data}|{nota}|{valor}"
 
-    # ----------------------------------------------------------------------
-    # ETAPA 2 - SIMILAR (FUZZY)
-    # ----------------------------------------------------------------------
-    def _group_by_similar_match(self, entries, processados):
+    # ============================================================
+    # FUZZY
+    # ============================================================
+    def _group_fuzzy(self, entries, processados: Set[str]):
         groups = {}
 
         for e in entries:
             if self._unique_key(e) in processados:
                 continue
 
-            fornecedor = normalize_text(e.get("fornecedor", ""))
-            valor = self._normalize_valor(e.get("valorContabil", "0,00"))
-
             added = False
 
-            for key, group in groups.items():
+            for group in groups.values():
                 ref = group[0]
 
                 if self._is_similar(e, ref):
@@ -149,64 +146,56 @@ class DuplicateAnalyzer:
                     break
 
             if not added:
-                key = f"{fornecedor}|{valor}"
-                groups[key] = [e]
+                key = f"{self._norm(e['fornecedor'])}|{self._norm_valor(e['valorContabil'])}"
+                groups.setdefault(key, []).append(e)
 
         return groups
 
     def _is_similar(self, a, b):
-        """Fornecedor parecido e valor igual"""
-        valor_ok = self._normalize_valor(a["valorContabil"]) == self._normalize_valor(b["valorContabil"])
-        if not valor_ok:
+        """Fornecedor fuzzy + valor igual"""
+        if self._norm_valor(a["valorContabil"]) != self._norm_valor(b["valorContabil"]):
             return False
 
-        fornecedor_a = normalize_text(a.get("fornecedor", ""))
-        fornecedor_b = normalize_text(b.get("fornecedor", ""))
+        fa = self._norm(a["fornecedor"])
+        fb = self._norm(b["fornecedor"])
 
-        similarity = fuzz.ratio(fornecedor_a, fornecedor_b)
+        similarity = fuzz.ratio(fa, fb)
 
         return similarity >= self.similarity_threshold
 
-    # ----------------------------------------------------------------------
-    # FORMATAÇÃO DO RELATÓRIO
-    # ----------------------------------------------------------------------
+    # ============================================================
+    # FORMATAÇÃO
+    # ============================================================
     def _format_group(self, entries, tipo, motivo):
         first = entries[0]
 
         return {
             "fornecedor": first.get("fornecedor", ""),
             "data": first.get("data", ""),
-            "notaSerie": first.get("notaSerie", "N/A"),
-            "valorContabil": first.get("valorContabil", "0,00"),
+            "notaSerie": first.get("notaSerie", ""),
+            "valorContabil": first.get("valorContabil", ""),
             "tipo": tipo,
             "motivo": motivo,
             "ocorrencias": len(entries),
             "chaveDuplicata": self._exact_key(first),
             "detalhes": [
                 {
-                    "posicao": e.get("posicao", "N/A"),
+                    "posicao": e.get("posicao", ""),
                     "fornecedor": e.get("fornecedor", ""),
                     "data": e.get("data", ""),
-                    "notaSerie": e.get("notaSerie", "N/A"),
-                    "valorContabil": e.get("valorContabil", "0,00"),
+                    "notaSerie": e.get("notaSerie", ""),
+                    "valorContabil": e.get("valorContabil", ""),
                     "diferencaDias": self._diff_days(first.get("data"), e.get("data"))
                 }
                 for e in entries
             ]
         }
 
-    # ----------------------------------------------------------------------
+    # ============================================================
     # HELPERS
-    # ----------------------------------------------------------------------
+    # ============================================================
     def _unique_key(self, e):
         return self._exact_key(e)
-
-    def _normalize_valor(self, v: str) -> float:
-        v = v.replace(".", "").replace(",", ".")
-        try:
-            return float(v)
-        except:
-            return 0.0
 
     def _diff_days(self, d1, d2):
         try:
@@ -215,6 +204,18 @@ class DuplicateAnalyzer:
             return abs((d2 - d1).days)
         except:
             return 0
+
+    def _norm(self, text: str):
+        text = text.strip().lower()
+        text = unicodedata.normalize("NFKD", text).encode("ASCII", "ignore").decode()
+        return text
+
+    def _norm_valor(self, v: str) -> float:
+        try:
+            v = v.replace(".", "").replace(",", ".")
+            return float(v)
+        except:
+            return 0.0
 
     def _empty_result(self, total):
         return {
