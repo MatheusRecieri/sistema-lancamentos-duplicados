@@ -93,9 +93,9 @@ class PDFReader:
             columns = self._detect_columns(grouped_lines)
             # extrair registros
             entries = self._extract_entries(grouped_lines, columns, page_num)
-            all_entries.extend(entries)
+            # all_entries.extend(entries)
 
-            print(all_entries)
+            print(grouped_lines)
 
         logger.info(f"🎯 Extração finalizada. Total registros: {len(all_entries)}")
         return all_entries
