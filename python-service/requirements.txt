@@ -3,7 +3,7 @@ gunicorn
 uvicorn[standard]
 fastapi
 python-multipart
-pymupdf
+
 # PDF Processing
 pdfplumber
 pypdf
