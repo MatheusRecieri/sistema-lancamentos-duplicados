@@ -31,34 +31,27 @@ class PDFReader:
     # AGRUPAMENTO POR LINHA
     # ------------------------------
     def _group_words_by_line(self, words):
-        """
-        Agrupa palavras por linha usando coordenada Y.
-        words: lista retornada por page.get_text("words")
-              formato: [x0, y0, x1, y1, text, block_no, line_no, word_no]
-        """
-
         lines = {}
 
         for w in words:
             try:
                 x0, y0, x1, y1, text, block, line, word_no = w
             except ValueError:
-                # Caso o PyMuPDF mude a estrutura no futuro
                 x0, y0, x1, y1, text = w[:5]
 
-            key = round(y0, 1)  # agrupar coordenadas semelhantes
+            key = round(y0, 1)
+
             if key not in lines:
                 lines[key] = []
+
             lines[key].append((x0, text))
 
-        # Ordenar palavras por X antes de unir
-        sorted_lines = []
+        # ORDENAR POR Y e retornar listas com coordenadas intactas
+        grouped = []
         for key in sorted(lines.keys()):
-            line_words = sorted(lines[key], key=lambda w: w[0])
-            text = " ".join([w[1] for w in line_words])
-            sorted_lines.append(text)
+            grouped.append(sorted(lines[key], key=lambda v: v[0]))
 
-        return sorted_lines
+        return grouped
 
     # ------------------------------
     # DETECTAR COLUNAS PELO X
