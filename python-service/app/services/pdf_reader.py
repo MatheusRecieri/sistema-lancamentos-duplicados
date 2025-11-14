@@ -1,5 +1,5 @@
 import re
-import pdfplumber from pdfplumber 
+import pdfplumber  
 from typing import List, Dict, Any
 
 
@@ -30,8 +30,8 @@ class PDFReader:
 
 
 # Exemplo de uso:
-if __name__ == "__main__":
-    reader = PDFReader()
-    data = reader.extract_from_pdf("Entradas-teste3.pdf")
-    for item in data[:10]:  # Mostra os 10 primeiros resultados
-        print(item)
+# if __name__ == "__main__":
+#     reader = PDFReader()
+#     data = reader.extract_from_pdf("Entradas-teste3.pdf")
+#     for item in data[:10]:  # Mostra os 10 primeiros resultados
+#         print(item)
