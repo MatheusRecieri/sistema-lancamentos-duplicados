@@ -95,8 +95,6 @@ class PDFReader:
             entries = self._extract_entries(grouped_lines, columns, page_num)
             all_entries.extend(entries)
 
-            print(grouped_lines)
-
         logger.info(f"🎯 Extração finalizada. Total registros: {len(all_entries)}")
         return all_entries
 
