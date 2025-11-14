@@ -381,8 +381,8 @@ class PDFReader:
         self, mapped: Dict[str, str], page_num: int, line_index: int
     ) -> Optional[Dict[str, Any]]:
 
-        if self._is_header_line(mapped):
-            return None
+        # if self._is_header_line(mapped):
+        #     return None
 
         codigo = mapped.get("codigo") or "N/A"
         fornecedor = mapped.get("fornecedor") or ""
