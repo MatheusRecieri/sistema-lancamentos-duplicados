@@ -1,118 +1,139 @@
-import re
-from typing import List, Dict, Any, Optional
-import pdfplumber
-from datetime import datetime
-from app.utils.normalizer import (
-    normalize_text,
-    clean_monetary_value,
-    clean_date,
-    clean_supplier_name,
-)
-from concurrent.futures import ThreadPoolExecutor
+import pymupdf as fitz
+from typing import List, Dict, Any
+from app.utils.normalizer import clean_date, clean_monetary_value, clean_supplier_name
 
 
 class PDFReader:
-    """
-    Leitor de PDF robusto para múltiplas estratégias de extração.
-    """
-
-    def _init_(self):
-        self.extraction_strategies = [
-            self._extract_with_regex,
-        ]
 
     def extract_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
-        """
-        Extrai dados estruturados do PDF usando regex.
-        """
-        print(f"🔍 Iniciando extração do PDF: {pdf_path}")
+        print(f"🔍 Iniciando extração com PyMuPDF: {pdf_path}")
+        doc = fitz.open(pdf_path)
 
         all_entries = []
-        with pdfplumber.open(pdf_path) as pdf:
-            for page_num, page in enumerate(pdf.pages, 1):
-                print(f"📄 Processando página {page_num}/{len(pdf.pages)}")
-                entries = self._extract_with_regex(page, page_num)
-                all_entries.extend(entries)
 
-        print(f"🎯 Total extraído: {len(all_entries)} registros")
-        return all_entries
+        for page_num, page in enumerate(doc, 1):
+            print(f"📄 Processando página {page_num}/{len(doc)}")
 
-    def _extract_with_regex(self, page, page_num: int) -> List[Dict[str, Any]]:
-        """
-        Estratégia: extração via regex para PDFs sem estrutura tabular clara.
-        """
-        text = page.extract_text()
-        if not text:
-            return []
-
-        entries = []
-        lines = text.split("\n")
-
-        # Padrão adaptado ao layout do PDF de "Entradas.pdf"
-        pattern = re.compile(
-            r"^\d{3,6}\s+\d{2}/\d{2}/\d{4}\s+(\d{2}/\d{2}/\d{4})\s+(\d+)\s+\d+\s+\d+\s*-\s*([A-Z0-9\s\.\-]+?)\s+\d-\d+[A-Z]{2}\s+([\d.,]+)",
-            re.MULTILINE,
-        )
-
-        for idx, line in enumerate(lines):
-            if self._is_non_data_line(line):
+            words = page.get_text("words")  # [text, x1, y1, x2, y2]
+            if not words:
                 continue
 
-            match = re.search(pattern, line)
-            if match:
-                entry = self._build_entry_from_regex(match, line, idx, page_num)
-                if entry and self._is_valid_entry(entry):
-                    entries.append(entry)
+            lines = self._group_words_by_line(words)
+            columns = self._detect_columns(lines)
+
+            entries = self._extract_entries(lines, columns, page_num)
+            all_entries.extend(entries)
+
+        print(f"🎯 Extração concluída. Total: {len(all_entries)} registros")
+        return all_entries
+
+    # ------------------------------
+    # AGRUPAMENTO POR LINHA
+    # ------------------------------
+    def _group_words_by_line(self, words):
+        lines = []
+        current_line = []
+        last_y = None
+
+        for word in sorted(words, key=lambda w: (w[2], w[1])):  # ordena por Y depois X
+            text, x1, y1, x2, y2 = word
+
+            if last_y is None or abs(y1 - last_y) < 3:  # mesma linha
+                current_line.append(word)
+            else:
+                lines.append(current_line)
+                current_line = [word]
+
+            last_y = y1
+
+        if current_line:
+            lines.append(current_line)
+
+        return lines
+
+    # ------------------------------
+    # DETECTAR COLUNAS PELO X
+    # ------------------------------
+    def _detect_columns(self, lines):
+        x_positions = []
+
+        for line in lines:
+            if not line:
+                continue
+            for word in line:
+                x_positions.append(word[1])  # x1
+
+        # clusterização básica pela distância
+        x_positions = sorted(list(set(x_positions)))
+        columns = []
+
+        cluster = [x_positions[0]]
+        for x in x_positions[1:]:
+            if abs(x - cluster[-1]) < 30:  # tolerância
+                cluster.append(x)
+            else:
+                columns.append(sum(cluster) / len(cluster))
+                cluster = [x]
+
+        if cluster:
+            columns.append(sum(cluster) / len(cluster))
+
+        columns.sort()
+        return columns
+
+    # ------------------------------
+    # EXTRAÇÃO BASEADA EM COLUNAS
+    # ------------------------------
+    def _extract_entries(self, lines, columns, page_num):
+        entries = []
+
+        for line_index, words in enumerate(lines):
+            # Ordenar por X
+            words = sorted(words, key=lambda w: w[1])
+
+            col_data = {i: [] for i in range(len(columns))}
+
+            for word in words:
+                text, x1, y1, x2, y2 = word
+
+                # encontrar coluna mais próxima
+                col_idx = min(range(len(columns)), key=lambda i: abs(x1 - columns[i]))
+                col_data[col_idx].append(text)
+
+            # monta linha
+            entry = self._parse_line(col_data, page_num, line_index)
+
+            if entry:
+                entries.append(entry)
 
         return entries
 
-    def _build_entry_from_regex(
-        self, match, original_line: str, line_num: int, page_num: int
-    ) -> Optional[Dict[str, Any]]:
-        """Constrói uma entrada válida a partir do regex."""
-        try:
-            data, nota, fornecedor, valor_contabil = match.groups()
-        except Exception:
+    # ------------------------------
+    # PARSE INTELIGENTE
+    # ------------------------------
+    def _parse_line(self, col_data, page_num, line_index):
+        # montar as colunas em texto
+        cols = {i: " ".join(col_data[i]) for i in col_data}
+
+        # detectar campos (de forma tolerante)
+        codigo = cols.get(0, "").strip()
+        data = cols.get(1, "")
+        nota = cols.get(2, "")
+        fornecedor = cols.get(3, "")
+        valor = cols.get(4, "")
+
+        # validação mínima
+        if not fornecedor or not any(char.isalpha() for char in fornecedor):
+            return None
+        if not any(char.isdigit() for char in valor):
             return None
 
         return {
-            "codigoFornecedor": "N/A",
-            "fornecedor": clean_supplier_name(fornecedor.strip()),
+            "codigoFornecedor": codigo,
+            "fornecedor": clean_supplier_name(fornecedor),
             "data": clean_date(data),
-            "notaSerie": str(nota).strip(),
-            "valorContabil": clean_monetary_value(valor_contabil),
-            "valor": clean_monetary_value(valor_contabil),
-            "posicao": f"Pág {page_num}, Linha {line_num}",
+            "notaSerie": nota,
+            "valorContabil": clean_monetary_value(valor),
+            "valor": clean_monetary_value(valor),
+            "posicao": f"Pág {page_num}, Linha {line_index}",
         }
-
-    def _is_non_data_line(self, line: str) -> bool:
-        """Ignora linhas que não contêm dados relevantes."""
-        non_data_patterns = [
-            r"^total",
-            r"^subtotal",
-            r"^página",
-            r"^emissão",
-            r"sistema licenciado",
-            r"^cnpj:",
-            r"^insc\s+est:",
-            r"acompanhamento\s+de",
-            r"^\s*$",
-        ]
-        line_lower = line.lower().strip()
-        return any(re.match(pattern, line_lower) for pattern in non_data_patterns)
-
-    def _is_valid_entry(self, entry: Dict[str, Any]) -> bool:
-        """Valida se a entrada extraída é plausível."""
-        if not entry:
-            return False
-
-        if not entry.get("fornecedor") or entry["fornecedor"] == "Desconhecido":
-            return False
-        if not entry.get("data"):
-            return False
-        if entry.get("valorContabil", "0,00") == "0,00":
-            return False
-        if len(entry["fornecedor"]) < 3:
-            return False
-
-        return True
