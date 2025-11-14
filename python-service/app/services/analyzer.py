@@ -197,16 +197,17 @@ class DuplicateAnalyzer:
         - Valor exatamente igual
         """
         # Valor deve ser exatamente igual
-
-        # Fornecedor com fuzzy matching
         similarity = fuzz.ratio(fornecedor1, fornecedor2)
 
-        if similarity == True:
+        if similarity > 85.0:
             if valor1 != valor2:
                 return False
-            else:
 
-                return similarity >= self.similarity_threshold
+            print(similarity)
+
+            return similarity >= self.similarity_threshold
+
+        # Fornecedor com fuzzy matching
 
     def _create_exact_key(self, entry: Dict[str, Any]) -> str:
         """Cria chave para duplicata exata"""
